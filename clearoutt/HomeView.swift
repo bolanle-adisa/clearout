@@ -13,28 +13,35 @@ struct HomeView: View {
     @State private var selectedOption: String? = nil
     let options = ["Trending", "Clothes", "Shoes", "Electronics", "Books"]
 
+    struct Item: Identifiable {
+        let id = UUID()
+        let imageName: String
+        let name: String
+        let price: String
+    }
+
+    let mockData = [
+        Item(imageName: "shirt", name: "Stylish Shirt", price: "$49.99"),
+        Item(imageName: "shoes", name: "Running Shoes", price: "$89.99"),
+        // Add more items as needed
+    ]
+
     var body: some View {
         NavigationView {
             VStack(alignment: .leading) {
-                // Title and message icon
                 titleAndMessageIcon
-
-                // Search bar
                 searchBar
-                
-                // Options group
                 optionsGroup
-
-                Spacer() // Pushes everything to the top
+                itemsGrid
+                Spacer()
             }
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $isCameraPresented) {
-            // Implement your camera functionality here
             Text("Camera Functionality Here")
         }
     }
-    
+
     var titleAndMessageIcon: some View {
         HStack {
             Text("CLEAROUT")
@@ -54,7 +61,7 @@ struct HomeView: View {
         }
         .padding(.leading)
     }
-    
+
     var searchBar: some View {
         HStack {
             TextField("Search", text: $searchText)
@@ -62,13 +69,11 @@ struct HomeView: View {
                 .padding(.horizontal, 25)
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
-                .overlay(
-                    searchOverlayView
-                )
+                .overlay(searchOverlayView)
         }
         .padding([.leading, .trailing])
     }
-    
+
     var searchOverlayView: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -95,13 +100,23 @@ struct HomeView: View {
             .padding(.trailing, 8)
         }
     }
-    
+
     var optionsGroup: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 ForEach(options, id: \.self) { option in
-                    OptionButton(option: option, isSelected: selectedOption == option) {
+                    Button(action: {
                         self.selectedOption = option
+                    }) {
+                        Text(option)
+                            .fontWeight(.semibold)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16)
+                            .background(self.selectedOption == option ? LinearGradient(gradient: Gradient(colors: [Color.blue, Color.purple]), startPoint: .leading, endPoint: .trailing) : LinearGradient(gradient: Gradient(colors: [Color.white]), startPoint: .leading, endPoint: .trailing))
+                            .foregroundColor(self.selectedOption == option ? .white : .black)
+                            .cornerRadius(20)
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.gray, lineWidth: self.selectedOption == option ? 0 : 1))
+                            .shadow(color: self.selectedOption == option ? Color.blue.opacity(0.5) : Color.clear, radius: 10, x: 0, y: 5)
                     }
                 }
             }
@@ -109,37 +124,66 @@ struct HomeView: View {
         }
         .padding(.leading)
     }
+
+    var itemsGrid: some View {
+        let columns = [
+            GridItem(.flexible(), spacing: 16),
+            GridItem(.flexible(), spacing: 16)
+        ]
+        
+        return ScrollView(.vertical, showsIndicators: false) {
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(mockData) { item in
+                    ItemCard(item: item)
+                }
+            }
+            .padding([.horizontal, .top])
+        }
+        .background(Color(.systemGray6)) // Set background color for the scrollable part
+    }
 }
 
-struct OptionButton: View {
-    let option: String
-    let isSelected: Bool
-    let action: () -> Void
+struct ItemCard: View {
+    let item: HomeView.Item
 
     var body: some View {
-        Button(action: action) {
-            Text(option)
-                .fontWeight(.semibold)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(background)
-                .foregroundColor(isSelected ? .white : .black)
-                .cornerRadius(20)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.gray, lineWidth: isSelected ? 0 : 1)
-                )
-                .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.clear, radius: 10, x: 0, y: 5)
-        }
-    }
+        VStack(alignment: .leading, spacing: 6) {
+            Image(systemName: item.imageName) // Replace with actual image loading mechanism
+                .resizable()
+                .scaledToFit()
+                .frame(width: 150, height: 150)
+                .cornerRadius(10)
 
-    var background: LinearGradient {
-        isSelected
-            ? LinearGradient(gradient: Gradient(colors: [Color.blue, Color.purple]), startPoint: .leading, endPoint: .trailing)
-            : LinearGradient(gradient: Gradient(colors: [Color.white]), startPoint: .leading, endPoint: .trailing)
+            Text(item.name)
+                .font(.headline)
+            
+            Text(item.price)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            HStack {
+                Button(action: {
+                    // Wishlist action
+                }) {
+                    Image(systemName: "heart")
+                        .foregroundColor(.black)
+                }
+                .padding(.trailing, 100)
+
+                Button(action: {
+                    // Add to bag action
+                }) {
+                    Image(systemName: "cart")
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 2)
     }
 }
-
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {

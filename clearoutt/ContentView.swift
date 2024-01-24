@@ -20,19 +20,19 @@ struct ContentView: View {
 
             ShopView()
                 .tabItem {
-                    Label("Shop", systemImage: "cart.fill")
+                    Label("Wishlist", systemImage: "heart.fill")
                 }
                 .tag(1)
 
             BagView()
                 .tabItem {
-                    Label("Bag", systemImage: "bag.fill")
+                    Label("Sell", systemImage: "camera.fill")
                 }
                 .tag(2)
 
             WishlistView()
                 .tabItem {
-                    Label("Wishlist", systemImage: "heart.fill")
+                    Label("Cart", systemImage: "cart.fill")
                 }
                 .tag(3)
 
