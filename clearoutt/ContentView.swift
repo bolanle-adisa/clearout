@@ -11,38 +11,71 @@ struct ContentView: View {
     @EnvironmentObject var userSession: UserSession
 
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-                .tag(0)
+            TabView {
+                BuyView()
+                    .tabItem {
+                        Label("Buy", systemImage: "bag.fill")
+                    }
+                    .tag(0)
 
-            ShopView()
-                .tabItem {
-                    Label("Wishlist", systemImage: "heart.fill")
-                }
-                .tag(1)
+                RentView()
+                    .tabItem {
+                        Label("Rent", systemImage: "hourglass.bottomhalf.fill")
+                    }
+                    .tag(1)
 
-            BagView()
-                .tabItem {
-                    Label("Sell", systemImage: "camera.fill")
-                }
-                .tag(2)
+                SellView()
+                    .tabItem {
+                        Label("Sell", systemImage: "tag.fill")
+                    }
+                    .tag(2)
 
-            WishlistView()
-                .tabItem {
-                    Label("Cart", systemImage: "cart.fill")
-                }
-                .tag(3)
+                DonateView()
+                    .tabItem {
+                        Label("Donate", systemImage: "gift.fill")
+                    }
+                    .tag(3)
 
-            UserProfileView()
-                .tabItem {
-                    Label("Me", systemImage: "person.crop.circle.fill")
-                }
-                .tag(4)
+                UserProfileView()
+                    .tabItem {
+                        Label("Me", systemImage: "person.crop.circle.fill")
+                    }
+                    .tag(4)
+            }
         }
-    }
+//    var body: some View {
+//        TabView {
+//            HomeView()
+//                .tabItem {
+//                    Label("Home", systemImage: "house.fill")
+//                }
+//                .tag(0)
+//
+//            ShopView()
+//                .tabItem {
+//                    Label("Wishlist", systemImage: "heart.fill")
+//                }
+//                .tag(1)
+//
+//            BagView()
+//                .tabItem {
+//                    Label("Sell", systemImage: "camera.fill")
+//                }
+//                .tag(2)
+//
+//            WishlistView()
+//                .tabItem {
+//                    Label("Cart", systemImage: "cart.fill")
+//                }
+//                .tag(3)
+//
+//            UserProfileView()
+//                .tabItem {
+//                    Label("Me", systemImage: "person.crop.circle.fill")
+//                }
+//                .tag(4)
+//        }
+//    }
 }
 
 // Preview

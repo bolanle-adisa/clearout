@@ -32,16 +32,19 @@ struct UserProfileView: View {
             .padding(.horizontal)
 
             
-            Text("By selecting Create Account you agree to our Privacy Policy and Terms & Conditions")
-                .font(.footnote)
-                .foregroundColor(.gray)
-                .padding()
+//            Text("By selecting Create Account you agree to our Privacy Policy and Terms & Conditions")
+//                .font(.footnote)
+//                .foregroundColor(.gray)
+//                .padding()
             
             List {
-                SettingRow(icon: "cube.box", title: "Track Order")
-                SettingRow(icon: "bell", title: "Notifications")
-                SettingRow(icon: "questionmark.circle", title: "Help Center")
-                SettingRow(icon: "flag", title: "United States", detail: "(USD $)")
+                SettingRow(icon: "message", title: "Messages")
+                                SettingRow(icon: "bell", title: "Notifications")
+                                SettingRow(icon: "map", title: "Addresses")
+                                SettingRow(icon: "creditcard", title: "Payment Method")
+                                SettingRow(icon: "list.bullet.rectangle.portrait", title: "Transaction History")
+                                SettingRow(icon: "questionmark.circle", title: "Help Center")
+                                SettingRow(icon: "gearshape", title: "Settings")
             }
             
             Spacer() // Pushes everything to the top

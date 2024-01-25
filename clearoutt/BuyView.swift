@@ -1,13 +1,13 @@
 //
-//  HomeView.swift
+//  BuyView.swift
 //  clearoutt
 //
-//  Created by Bolanle Adisa on 1/22/24.
+//  Created by Bolanle Adisa on 1/24/24.
 //
 
 import SwiftUI
 
-struct HomeView: View {
+struct BuyView: View {
     @State private var searchText = ""
     @State private var isCameraPresented = false
     @State private var selectedOption: String? = nil
@@ -29,7 +29,7 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             VStack(alignment: .leading) {
-                titleAndMessageIcon
+                titleAndWishListAndCartIcon
                 searchBar
                 optionsGroup
                 itemsGrid
@@ -42,7 +42,7 @@ struct HomeView: View {
         }
     }
 
-    var titleAndMessageIcon: some View {
+    var titleAndWishListAndCartIcon: some View {
         HStack {
             Text("CLEAROUT")
                 .font(.largeTitle)
@@ -51,13 +51,22 @@ struct HomeView: View {
             Spacer()
             
             Button(action: {
-                // Action for the messaging icon
+                // Action for the wishlist icon
             }) {
-                Image(systemName: "message")
+                Image(systemName: "heart.fill")
                     .foregroundColor(.black)
                     .imageScale(.large)
-                    .padding(.trailing)
             }
+            .padding(.trailing, 10) // Adjust trailing padding to increase spacing
+
+            Button(action: {
+                // Action for cart icon
+            }) {
+                Image(systemName: "cart.fill")
+                    .foregroundColor(.black)
+                    .imageScale(.large)
+            }
+            .padding(.trailing, 15)
         }
         .padding(.leading)
     }
@@ -144,7 +153,7 @@ struct HomeView: View {
 }
 
 struct ItemCard: View {
-    let item: HomeView.Item
+    let item: BuyView.Item
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -187,6 +196,6 @@ struct ItemCard: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+        BuyView()
     }
 }
