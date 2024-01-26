@@ -9,40 +9,54 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var userSession: UserSession
+    @State private var selectedTab = 0
+    @State private var showingProfile = false
 
     var body: some View {
-            TabView {
-                BuyView()
-                    .tabItem {
-                        Label("Buy", systemImage: "bag.fill")
-                    }
-                    .tag(0)
+        TabView(selection: $selectedTab) {
+            BuyView()
+                .tabItem {
+                    Label("Buy", systemImage: "bag.fill")
+                }
+                .tag(0)
 
-                RentView()
-                    .tabItem {
-                        Label("Rent", systemImage: "hourglass.bottomhalf.fill")
-                    }
-                    .tag(1)
+            RentView()
+                .tabItem {
+                    Label("Rent", systemImage: "hourglass.bottomhalf.fill")
+                }
+                .tag(1)
 
-                SellView()
-                    .tabItem {
-                        Label("Sell", systemImage: "tag.fill")
-                    }
-                    .tag(2)
+            SellView()
+                .tabItem {
+                    Label("Sell", systemImage: "tag.fill")
+                }
+                .tag(2)
 
-                DonateView()
-                    .tabItem {
-                        Label("Donate", systemImage: "gift.fill")
-                    }
-                    .tag(3)
+            DonateView()
+                .tabItem {
+                    Label("Donate", systemImage: "gift.fill")
+                }
+                .tag(3)
 
-                UserProfileView()
-                    .tabItem {
-                        Label("Me", systemImage: "person.crop.circle.fill")
-                    }
-                    .tag(4)
+            Group {
+                if userSession.isAuthenticated {
+                    UserProfileTwoView()
+                } else {
+                    UserProfileView(showingProfile: $showingProfile) // Pass the binding here
+                        .environmentObject(userSession)
+                }
+            }
+            .tabItem {
+                Label("Me", systemImage: "person.crop.circle.fill")
+            }
+            .tag(4)
+        }
+        .onReceive(userSession.$isAuthenticated) { isAuthenticated in
+            if isAuthenticated {
+                selectedTab = 4
             }
         }
+    }
 }
 
 // Preview
@@ -52,4 +66,3 @@ struct ContentView_Previews: PreviewProvider {
             .environmentObject(UserSession())
     }
 }
-

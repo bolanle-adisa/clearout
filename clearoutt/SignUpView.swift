@@ -5,21 +5,33 @@
 //  Created by Bolanle Adisa on 1/24/24.
 //
 
+//
+//  SignUpView.swift
+//  clearoutt
+//
+//  Created by Bolanle Adisa on 1/24/24.
+//
+
 import SwiftUI
 import FirebaseFirestore
+import FirebaseAuth
 
 struct SignUpView: View {
     let email: String
     @State private var firstName: String = ""
-    @State private var lastName: String = ""
-    @State private var password: String = ""
-    @State private var confirmPassword: String = ""
-    @State private var passwordErrorMessage: String?
-    @State private var showingPasswordCriteria = false
-    @State private var showingCollegePicker = false
-    @State private var collegeText: String = "College/University"
-    @State private var selectedCollege: College?
-    @StateObject private var collegeFetcher = CollegeDataFetcher()
+        @State private var lastName: String = ""
+        @State private var password: String = ""
+        @State private var confirmPassword: String = ""
+        @State private var passwordErrorMessage: String?
+        @State private var showingPasswordCriteria = false
+        @State private var showingCollegePicker = false
+        @State private var collegeText: String = "College/University"
+        @State private var selectedCollege: College?
+        @State private var navigationActive = false
+        @StateObject private var collegeFetcher = CollegeDataFetcher()
+        @EnvironmentObject var userSession: UserSession
+        @Environment(\.presentationMode) var presentationMode
+        @Binding var showingProfile: Bool
 
     var body: some View {
         ScrollView {
@@ -99,24 +111,30 @@ struct SignUpView: View {
                                     )
                                 }
 
-                Button("Create Account") {
-                    if validatePasswords() {
-                        // Implement sign up logic here
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.black)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .padding(.horizontal)
-            }
-            .padding()
-        }
-        .onAppear {
-            collegeFetcher.fetchColleges()
-        }
-    }
+                Button(action: {
+                                        if validatePasswords() {
+                                            signUpUser()
+                                        }
+                                    }) {
+                                        Text("Create Account")
+                                            .frame(minWidth: 0, maxWidth: .infinity)
+                                            .padding()
+                                            .background(Color.black)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(10)
+                                    }
+                                    .padding(.horizontal)
+
+                                    NavigationLink(destination: UserProfileTwoView(), isActive: $navigationActive) {
+                                        EmptyView()
+                                    }
+                                }
+                                .padding()
+                            }
+                            .onAppear {
+                                collegeFetcher.fetchColleges()
+                            }
+                        }
 
     private func validatePasswords() -> Bool {
         passwordErrorMessage = nil
@@ -144,7 +162,20 @@ struct SignUpView: View {
 
         return passwordErrorMessage == nil
     }
-}
+    
+    private func signUpUser() {
+            Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+                if let error = error {
+                    self.passwordErrorMessage = error.localizedDescription
+                } else {
+                    DispatchQueue.main.async {
+                        self.userSession.isAuthenticated = true
+                        self.showingProfile = false // Dismiss the view
+                    }
+                }
+            }
+        }
+    }
 
 struct PasswordCriteriaView: View {
     let password: String
@@ -174,7 +205,12 @@ struct PasswordCriteriaView: View {
 }
 
 struct SignUpView_Previews: PreviewProvider {
+    // Create a State variable for the preview to simulate the binding
+    @State static var previewShowingProfile = false
+
     static var previews: some View {
-        SignUpView(email: "test@example.com")
+        // Pass the binding to the preview
+        SignUpView(email: "test@example.com", showingProfile: $previewShowingProfile)
+            .environmentObject(UserSession())  // Ensure to add this if your view relies on UserSession
     }
 }

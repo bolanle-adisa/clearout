@@ -13,6 +13,8 @@ struct UserProfileView: View {
     @State private var showSignInView: Bool = false
     @State private var emailErrorMessage: String?
     @EnvironmentObject var userSession: UserSession
+    @Binding var showingProfile: Bool
+
 
     var body: some View {
         VStack {
@@ -35,7 +37,7 @@ struct UserProfileView: View {
                     .padding(.bottom)
             }
 
-            Button("Continue") {
+            Button(action: {
                 if isEmailValid(email: emailAddress) {
                     emailErrorMessage = nil
                     checkUserAccount(email: emailAddress) { exists in
@@ -48,20 +50,20 @@ struct UserProfileView: View {
                 } else {
                     emailErrorMessage = "Please enter a valid email address."
                 }
+            }) {
+                Text("Continue")
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
             }
-            .frame(minWidth: 0, maxWidth: .infinity)
-            .padding()
-            .background(Color.black)
-            .foregroundColor(.white)
-            .cornerRadius(10)
             .padding(.horizontal)
 
             .sheet(isPresented: $showSignUpView) {
-                SignUpView(email: emailAddress)
-            }
-            .sheet(isPresented: $showSignInView) {
-                SignInView(email: emailAddress)
-            }
+                        SignUpView(email: emailAddress, showingProfile: $showingProfile) // Pass the binding here
+                            .environmentObject(userSession)
+                    }
 
             List {
                 SettingRow(icon: "message", title: "Messages")
@@ -138,7 +140,12 @@ struct SettingRow: View {
 }
 
 struct UserProfileView_Previews: PreviewProvider {
+    // Create a dummy binding variable for previews
+    @State static var dummyShowingProfile = false
+
     static var previews: some View {
-        UserProfileView()
+        // Pass the dummy binding to UserProfileView
+        UserProfileView(showingProfile: $dummyShowingProfile)
+            .environmentObject(UserSession()) // You might also need to inject the UserSession environment object if your view relies on it
     }
 }

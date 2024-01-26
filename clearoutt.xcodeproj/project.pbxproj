@@ -61,6 +61,7 @@
 		611179FA2B5EE09700989C42 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179F92B5EE09700989C42 /* CameraView.swift */; };
 		6142A81E2B62BFB900649BBE /* College.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6142A81D2B62BFB900649BBE /* College.swift */; };
 		6142A8202B62C6BD00649BBE /* CollegeDataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6142A81F2B62C6BD00649BBE /* CollegeDataFetcher.swift */; };
+		6142A8222B63921500649BBE /* UserProfileTwoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6142A8212B63921500649BBE /* UserProfileTwoView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +106,7 @@
 		611179F92B5EE09700989C42 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		6142A81D2B62BFB900649BBE /* College.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = College.swift; sourceTree = "<group>"; };
 		6142A81F2B62C6BD00649BBE /* CollegeDataFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollegeDataFetcher.swift; sourceTree = "<group>"; };
+		6142A8212B63921500649BBE /* UserProfileTwoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileTwoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -197,6 +199,7 @@
 				610E3B052B622E500081A3F0 /* SignInView.swift */,
 				6142A81D2B62BFB900649BBE /* College.swift */,
 				6142A81F2B62C6BD00649BBE /* CollegeDataFetcher.swift */,
+				6142A8212B63921500649BBE /* UserProfileTwoView.swift */,
 				610E3AC62B6228190081A3F0 /* GoogleService-Info.plist */,
 				611179C52B5EDACB00989C42 /* Assets.xcassets */,
 				611179C72B5EDACB00989C42 /* Preview Content */,
@@ -402,6 +405,7 @@
 				611179F42B5EDD9300989C42 /* WishlistView.swift in Sources */,
 				610E3ABD2B6163EC0081A3F0 /* BuyView.swift in Sources */,
 				611179FA2B5EE09700989C42 /* CameraView.swift in Sources */,
+				6142A8222B63921500649BBE /* UserProfileTwoView.swift in Sources */,
 				611179C42B5EDACA00989C42 /* ContentView.swift in Sources */,
 				6142A8202B62C6BD00649BBE /* CollegeDataFetcher.swift in Sources */,
 				611179C22B5EDACA00989C42 /* clearouttApp.swift in Sources */,

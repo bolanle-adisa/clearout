@@ -18,6 +18,7 @@ struct clearouttApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+            .environmentObject(UserSession())
         }
     }
 }
