@@ -66,11 +66,6 @@ struct UserProfileView: View {
                     }
 
             List {
-                SettingRow(icon: "message", title: "Messages")
-                SettingRow(icon: "bell", title: "Notifications")
-                SettingRow(icon: "map", title: "Addresses")
-                SettingRow(icon: "creditcard", title: "Payment Method")
-                SettingRow(icon: "list.bullet.rectangle.portrait", title: "Transaction History")
                 SettingRow(icon: "questionmark.circle", title: "Help Center")
                 SettingRow(icon: "gearshape", title: "Settings")
             }

@@ -5,13 +5,6 @@
 //  Created by Bolanle Adisa on 1/24/24.
 //
 
-//
-//  SignUpView.swift
-//  clearoutt
-//
-//  Created by Bolanle Adisa on 1/24/24.
-//
-
 import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
@@ -39,7 +32,7 @@ struct SignUpView: View {
                 Text("CREATE ACCOUNT")
                     .font(.headline)
                     .fontWeight(.bold)
-                    .padding()
+                    //.padding()
                 Text(email.lowercased())
                     .font(.footnote)
                     .foregroundColor(.gray)
@@ -164,17 +157,32 @@ struct SignUpView: View {
     }
     
     private func signUpUser() {
-            Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
-                if let error = error {
-                    self.passwordErrorMessage = error.localizedDescription
-                } else {
-                    DispatchQueue.main.async {
-                        self.userSession.isAuthenticated = true
-                        self.showingProfile = false // Dismiss the view
+        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+            if let error = error {
+                self.passwordErrorMessage = error.localizedDescription
+            } else if let userId = authResult?.user.uid {
+                // User is successfully created, now store additional information in Firestore
+                let db = Firestore.firestore()
+                db.collection("users").document(userId).setData([
+                    "firstName": self.firstName,
+                    "lastName": self.lastName,
+                    "email": self.email,
+                    "college": self.selectedCollege?.name ?? "Not Specified"
+                    // Add other fields if necessary
+                ]) { error in
+                    if let error = error {
+                        print("Error writing document: \(error)")
+                        self.passwordErrorMessage = "Failed to save user data."
+                    } else {
+                        DispatchQueue.main.async {
+                            self.userSession.isAuthenticated = true
+                            self.showingProfile = false // Dismiss the view
+                        }
                     }
                 }
             }
         }
+    }
     }
 
 struct PasswordCriteriaView: View {
