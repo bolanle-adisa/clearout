@@ -14,6 +14,7 @@ class UserSession: ObservableObject {
     // For example, a simple isLoggedIn flag:
     @Published var isLoggedIn: Bool = false
     @Published var isAuthenticated = false
+    @Published var firstName: String = ""
 
     // Add more properties and methods as needed
     

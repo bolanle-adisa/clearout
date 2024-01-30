@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
 
 struct UserProfileView: View {
     @State private var emailAddress: String = ""
@@ -14,7 +15,6 @@ struct UserProfileView: View {
     @State private var emailErrorMessage: String?
     @EnvironmentObject var userSession: UserSession
     @Binding var showingProfile: Bool
-
 
     var body: some View {
         VStack {
@@ -43,8 +43,10 @@ struct UserProfileView: View {
                     checkUserAccount(email: emailAddress) { exists in
                         if exists {
                             self.showSignInView = true
+                            self.showSignUpView = false
                         } else {
                             self.showSignUpView = true
+                            self.showSignInView = false
                         }
                     }
                 } else {
@@ -61,9 +63,13 @@ struct UserProfileView: View {
             .padding(.horizontal)
 
             .sheet(isPresented: $showSignUpView) {
-                        SignUpView(email: emailAddress, showingProfile: $showingProfile) // Pass the binding here
-                            .environmentObject(userSession)
-                    }
+                SignUpView(email: emailAddress, showingProfile: $showingProfile)
+                    .environmentObject(userSession)
+            }
+            .sheet(isPresented: $showSignInView) {
+                SignInView(email: emailAddress, showingProfile: $showingProfile)
+                    .environmentObject(userSession)
+            }
 
             List {
                 SettingRow(icon: "questionmark.circle", title: "Help Center")
@@ -75,10 +81,15 @@ struct UserProfileView: View {
     }
 
     private func checkUserAccount(email: String, completion: @escaping (Bool) -> Void) {
-        // Simulate Firebase Authentication logic
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            let userExists = false // Or true for testing
-            completion(userExists)
+        let db = Firestore.firestore()
+        db.collection("users").whereField("email", isEqualTo: email).getDocuments { (querySnapshot, err) in
+            if let err = err {
+                print("Error getting documents: \(err)")
+                completion(false)
+            } else {
+                let userExists = querySnapshot!.documents.count > 0
+                completion(userExists)
+            }
         }
     }
 
@@ -135,12 +146,10 @@ struct SettingRow: View {
 }
 
 struct UserProfileView_Previews: PreviewProvider {
-    // Create a dummy binding variable for previews
     @State static var dummyShowingProfile = false
 
     static var previews: some View {
-        // Pass the dummy binding to UserProfileView
         UserProfileView(showingProfile: $dummyShowingProfile)
-            .environmentObject(UserSession()) // You might also need to inject the UserSession environment object if your view relies on it
+            .environmentObject(UserSession())
     }
 }

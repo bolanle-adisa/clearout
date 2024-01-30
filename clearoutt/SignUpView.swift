@@ -161,7 +161,6 @@ struct SignUpView: View {
             if let error = error {
                 self.passwordErrorMessage = error.localizedDescription
             } else if let userId = authResult?.user.uid {
-                // User is successfully created, now store additional information in Firestore
                 let db = Firestore.firestore()
                 db.collection("users").document(userId).setData([
                     "firstName": self.firstName,
@@ -176,13 +175,15 @@ struct SignUpView: View {
                     } else {
                         DispatchQueue.main.async {
                             self.userSession.isAuthenticated = true
-                            self.showingProfile = false // Dismiss the view
+                            self.navigationActive = true // Triggers navigation to UserProfileTwoView
+                            self.showingProfile = false // Dismisses the signup sheet
                         }
                     }
                 }
             }
         }
     }
+
     }
 
 struct PasswordCriteriaView: View {
