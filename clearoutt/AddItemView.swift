@@ -83,18 +83,21 @@ struct AddItemView: View {
                         itemImage
                             .resizable()
                             .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: 180) // Larger frame for selected image
                     } else {
-                        Rectangle()
-                            .foregroundColor(.clear)
-                            .aspectRatio(1, contentMode: .fit)
-                            .overlay(
-                                Image(systemName: "camera")
-                                    .foregroundColor(.gray)
-                                    .font(.system(size: 48))
-                            )
+                        // Smaller representation for the add button
+                        HStack {
+                            Spacer()
+                            Image(systemName: "plus")
+                                .font(.system(size: 20)) // Adjusted for smaller representation
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                        .padding() // Add padding to match the height of text fields
+                        .background(Rectangle().fill(Color.clear)) // Keep clear background
+                        .frame(height: 44) // Match the height of text input fields
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: 180)
             }
         }
         .actionSheet(isPresented: $showingSourcePicker) {
@@ -111,7 +114,6 @@ struct AddItemView: View {
             ])
         }
     }
-
 
 
     private var itemNameSection: some View {
