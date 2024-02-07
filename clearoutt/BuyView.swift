@@ -11,7 +11,9 @@ struct BuyView: View {
     @State private var searchText = ""
     @State private var isCameraPresented = false
     @State private var selectedOption: String? = nil
-    let options = ["Trending", "Clothes", "Shoes", "Electronics", "Books"]
+
+    let options = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes", "Electronics", "Dorm Essentials", "Books"]
+
 
     struct Item: Identifiable {
         let id = UUID()
