@@ -23,6 +23,7 @@ struct AddItemView: View {
     @State private var showingConfirmationView = false
     @State private var showActionSheet = false
     @State private var showingSourcePicker = false
+    @State private var videoURL: URL?
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
 
 
@@ -46,7 +47,7 @@ struct AddItemView: View {
                 addNewItem()
             }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || inputImage == nil))
             .sheet(isPresented: $isPresentingImagePicker) {
-                ImagePickerView(image: $itemImage, inputImage: $inputImage, sourceType: sourceType)
+                ImagePickerView(image: $itemImage, inputImage: $inputImage, videoURL: $videoURL, sourceType: sourceType)
             }
             .fullScreenCover(isPresented: $showingConfirmationView, onDismiss: {
                 self.showingConfirmationView = false

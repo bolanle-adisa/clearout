@@ -10,13 +10,15 @@ import SwiftUI
 struct ImagePickerView: UIViewControllerRepresentable {
     @Binding var image: Image?
     @Binding var inputImage: UIImage?
-    var completion: (() -> Void)? // Make completion optional
+    @Binding var videoURL: URL?
+    var completion: (() -> Void)?
     var sourceType: UIImagePickerController.SourceType
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = sourceType
+        picker.mediaTypes = ["public.image", "public.movie"] // Include both image and movie types
         return picker
     }
 
@@ -33,12 +35,14 @@ struct ImagePickerView: UIViewControllerRepresentable {
             self.parent = parent
         }
 
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let uiImage = info[.originalImage] as? UIImage {
                 parent.image = Image(uiImage: uiImage)
-                parent.inputImage = uiImage // Correctly update the UIImage binding
-                parent.completion?() // Call completion if it exists
+                parent.inputImage = uiImage
+            } else if let videoUrl = info[.mediaURL] as? URL {
+                parent.videoURL = videoUrl
             }
+            parent.completion?()
             picker.dismiss(animated: true)
         }
 

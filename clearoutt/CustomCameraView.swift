@@ -11,84 +11,66 @@ import AVFoundation
 struct CustomCameraView: View {
     @Binding var image: Image?
     @Binding var inputImage: UIImage?
-    @Binding var showingConfirmationView: Bool
-    @State private var showPhotoLibrary = false
-    @Environment(\.presentationMode) var presentationMode
-
+    @Binding var videoURL: URL?
+    @State private var isRecording = false
     let cameraController = CameraController()
 
     var body: some View {
         ZStack {
             CameraPreview(cameraController: cameraController)
+                .edgesIgnoringSafeArea(.all)
 
             VStack {
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.title)
-                            .padding()
-                            .foregroundColor(.white)
-                    }
-                    Spacer()
-                    Button(action: {
-                        self.showingConfirmationView = true // Show photo library or picker here if needed
-                    }) {
-                        Image(systemName: "photo.on.rectangle.angled")
-                            .font(.title)
-                            .padding()
-                            .foregroundColor(.white)
-                    }
-                }
                 Spacer()
+                if let image = image {
+                    image
+                        .resizable()
+                        .scaledToFit()
+                }
+                
                 HStack {
                     Button(action: {
-                        cameraController.switchCamera()
+                        self.cameraController.switchCamera()
                     }) {
-                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                        Image(systemName: "arrow.2.circlepath.camera")
                             .font(.title)
-                            .padding()
                             .foregroundColor(.white)
+                            .padding(.horizontal)
                     }
-                    Spacer()
+                    
                     Button(action: {
-                        cameraController.takePhoto { uiImage in
-                            if let uiImage = uiImage {
-                                self.inputImage = uiImage
-                                self.showingConfirmationView = true // Trigger review step here
-                            }
+                        if self.isRecording {
+                            self.cameraController.stopRecording()
+                        } else {
+                            let outputPath = NSTemporaryDirectory() + UUID().uuidString + ".mov"
+                            let outputFileURL = URL(fileURLWithPath: outputPath)
+                            self.cameraController.startRecording(to: outputFileURL)
+                            self.videoURL = outputFileURL // Optionally handle or store the video URL as needed
                         }
+                        self.isRecording.toggle()
                     }) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 70, height: 70)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        Image(systemName: self.isRecording ? "stop.circle" : "video.circle")
+                            .font(.largeTitle)
+                            .foregroundColor(self.isRecording ? .red : .white)
                     }
-                    Spacer()
                 }
-                .padding()
             }
         }
         .onAppear {
-            cameraController.setup()
+            self.cameraController.setup()
         }
         .onDisappear {
-            cameraController.tearDown()
-        }
-    
-        .sheet(isPresented: $showPhotoLibrary) {
-            ImagePickerView(image: $image, inputImage: $inputImage, sourceType: .photoLibrary)
+            self.cameraController.tearDown()
         }
     }
 }
 
 struct CameraPreview: UIViewRepresentable {
-    @ObservedObject var cameraController: CameraController
+    var cameraController: CameraController
     
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: UIScreen.main.bounds)
-        cameraController.previewLayer.frame = view.bounds
+        cameraController.previewLayer.frame = view.frame
         view.layer.addSublayer(cameraController.previewLayer)
         return view
     }
@@ -96,90 +78,73 @@ struct CameraPreview: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
 
-class CameraController: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
-    private var captureSession: AVCaptureSession?
-    private var frontCamera: AVCaptureDevice?
-    private var rearCamera: AVCaptureDevice?
-    private var currentCameraPosition: CameraPosition?
-    private var photoOutput: AVCapturePhotoOutput?
-    var previewLayer: AVCaptureVideoPreviewLayer
+
+class CameraController: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate, AVCaptureFileOutputRecordingDelegate {
+    var captureSession: AVCaptureSession?
+    var frontCamera: AVCaptureDevice?
+    var rearCamera: AVCaptureDevice?
+    var currentCameraPosition: CameraPosition?
+    var photoOutput: AVCapturePhotoOutput?
+    var videoOutput: AVCaptureMovieFileOutput?
+    var previewLayer: AVCaptureVideoPreviewLayer!
+    var isRecording = false
 
     override init() {
-        let session = AVCaptureSession()
-        self.previewLayer = AVCaptureVideoPreviewLayer(session: session)
         super.init()
-        self.captureSession = session
+        self.captureSession = AVCaptureSession()
+        self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
         self.previewLayer.videoGravity = .resizeAspectFill
     }
     
-    func checkCameraAuthorization(completion: @escaping (Bool) -> Void) {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-            case .authorized:
-                completion(true) // Already authorized
-            case .notDetermined:
-                AVCaptureDevice.requestAccess(for: .video) { granted in
-                    DispatchQueue.main.async {
-                        completion(granted)
-                    }
-                }
-            case .denied, .restricted:
-                completion(false) // User has denied or cannot grant access
-            @unknown default:
-                completion(false) // Handle any future cases
-        }
-    }
-    
     func setup() {
-        checkCameraAuthorization { [weak self] authorized in
-            guard let self = self, authorized else {
-                print("Camera access was denied or restricted.")
-                return
-            }
-            
-            // This must be done on the main thread because AVCaptureSession setup alters the UI layout.
-            DispatchQueue.main.async {
+        checkCameraAuthorization { authorized in
+            if authorized {
                 self.configureCaptureSession()
             }
         }
     }
-    
+
     func configureCaptureSession() {
-        guard let captureSession = captureSession else { return }
+        guard let captureSession = self.captureSession else { return }
         
         captureSession.beginConfiguration()
         
         // Setup devices
-        let videoDevices = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera],
-                                                            mediaType: .video,
-                                                            position: .unspecified).devices
+        let videoDevices = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: .video, position: .unspecified).devices
         
-        guard !videoDevices.isEmpty else {
-            print("No cameras on the device or you are running on the Simulator (which isn't supported)")
-            return
+        try? videoDevices.forEach { device in
+            if device.position == .back {
+                self.rearCamera = device
+            } else if device.position == .front {
+                self.frontCamera = device
+            }
         }
         
-        frontCamera = videoDevices.first(where: { $0.position == .front })
-        rearCamera = videoDevices.first(where: { $0.position == .back })
-        
-        // Set the initial camera position
-        currentCameraPosition = .rear
-        
-        // Add rear camera input
-        if let rearCamera = rearCamera, let rearCameraInput = try? AVCaptureDeviceInput(device: rearCamera),
-           captureSession.canAddInput(rearCameraInput) {
+        if let rearCamera = self.rearCamera, let rearCameraInput = try? AVCaptureDeviceInput(device: rearCamera), captureSession.canAddInput(rearCameraInput) {
             captureSession.addInput(rearCameraInput)
+            self.currentCameraPosition = .rear
+        } else if let frontCamera = self.frontCamera, let frontCameraInput = try? AVCaptureDeviceInput(device: frontCamera), captureSession.canAddInput(frontCameraInput) {
+            captureSession.addInput(frontCameraInput)
+            self.currentCameraPosition = .front
         }
+
         
         // Setup photo output
         let photoOutput = AVCapturePhotoOutput()
-        if captureSession.canAddOutput(photoOutput) {
-            captureSession.addOutput(photoOutput)
-            self.photoOutput = photoOutput
-        }
-        
-        captureSession.commitConfiguration()
-        captureSession.startRunning()
-    }
+                if captureSession.canAddOutput(photoOutput) {
+                    captureSession.addOutput(photoOutput)
+                    self.photoOutput = photoOutput
+                }
+                
+                // Setup video output
+                let videoOutput = AVCaptureMovieFileOutput()
+                if captureSession.canAddOutput(videoOutput) {
+                    captureSession.addOutput(videoOutput)
+                    self.videoOutput = videoOutput
+                }
+                
+                captureSession.commitConfiguration()
+            }
     
     func tearDown() {
         captureSession?.stopRunning()
@@ -196,7 +161,7 @@ class CameraController: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
         
         captureSession.beginConfiguration()
         
-        func switchToCamera(position: AVCaptureDevice.Position) {
+    func switchToCamera(position: AVCaptureDevice.Position) {
             let newDevice = (position == .back) ? rearCamera : frontCamera
             for input in captureSession.inputs {
                 captureSession.removeInput(input)
@@ -249,15 +214,55 @@ class CameraController: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
         case rear
     }
     
+    func startRecording(to outputFileURL: URL) {
+        guard let videoOutput = self.videoOutput else { return }
+        
+        if videoOutput.isRecording {
+            videoOutput.stopRecording() // Optional: Stop any existing recording
+        }
+        
+        videoOutput.startRecording(to: outputFileURL, recordingDelegate: self)
+    }
+
+    func stopRecording() {
+        guard let videoOutput = self.videoOutput, videoOutput.isRecording else { return }
+        videoOutput.stopRecording()
+    }
+
+    func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
+        if let error = error {
+            print("Error recording video: \(error.localizedDescription)")
+        } else {
+            // Handle successful recording (e.g., save the video to an album, update UI)
+            DispatchQueue.main.async {
+                // Update your UI or handle the video URL as needed
+            }
+        }
+    }
+    
+    private func checkCameraAuthorization(completion: @escaping (Bool) -> Void) {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            completion(true)
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                completion(granted)
+            }
+        default:
+            completion(false)
+        }
+    }
     
 }
 
 struct CustomCameraView_Previews: PreviewProvider {
     @State static var image: Image? = nil
     @State static var inputImage: UIImage? = nil
-    @State static var showingConfirmationView = false
+    @State static var videoURL: URL? = nil // Added to match the expected argument
 
     static var previews: some View {
-        CustomCameraView(image: $image, inputImage: $inputImage, showingConfirmationView: $showingConfirmationView)
+        // Updated to include videoURL as per the CustomCameraView definition
+        CustomCameraView(image: $image, inputImage: $inputImage, videoURL: $videoURL)
     }
 }
+
