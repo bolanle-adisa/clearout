@@ -75,7 +75,7 @@ struct AddItemView: View {
 
 
     private var itemImageSection: some View {
-        Section(header: Text("Item Image")) {
+        Section(header: Text("Item Media")) {
             Button(action: {
                 self.showingSourcePicker = true
             }) {
@@ -102,7 +102,7 @@ struct AddItemView: View {
             }
         }
         .actionSheet(isPresented: $showingSourcePicker) {
-            ActionSheet(title: Text("Select Image"), message: Text("Choose a source"), buttons: [
+            ActionSheet(title: Text("Select Image or Video"), message: Text("Choose a source"), buttons: [
                 .default(Text("Camera")) {
                     self.sourceType = .camera
                     self.isPresentingImagePicker = true
