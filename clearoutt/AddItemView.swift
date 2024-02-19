@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct AddItemView: View {
     @Binding var itemsForSale: [ItemForSale]
@@ -16,11 +17,10 @@ struct AddItemView: View {
     @State private var itemPrice: String = ""
     @State private var selectedSize: String = ""
     @State private var itemColor: Color = .white
-    @State private var isPresentingImagePicker = false
+    @State private var isPresentingMediaPicker = false
     @State private var inputImage: UIImage?
     @State private var itemImage: Image?
     @State private var selectedCategory: String = ""
-    @State private var showingConfirmationView = false
     @State private var showActionSheet = false
     @State private var showingSourcePicker = false
     @State private var videoURL: URL?
@@ -45,46 +45,100 @@ struct AddItemView: View {
             .navigationTitle("Add New Item")
             .navigationBarItems(trailing: Button("Done") {
                 addNewItem()
-            }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || inputImage == nil))
-            .sheet(isPresented: $isPresentingImagePicker) {
-                ImagePickerView(image: $itemImage, inputImage: $inputImage, videoURL: $videoURL, sourceType: sourceType)
+            }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || (inputImage == nil && videoURL == nil)))
+            .sheet(isPresented: $isPresentingMediaPicker) {
+                UniversalMediaPickerView(inputImage: $inputImage, videoURL: $videoURL, completion: handleMediaSelection, sourceType: sourceType)
             }
-            .fullScreenCover(isPresented: $showingConfirmationView, onDismiss: {
-                self.showingConfirmationView = false
-            }) {
-                if let inputImage = self.inputImage {
-                    PhotoConfirmationView(image: inputImage, onRetake: {
-                        // Logic to retake the photo or reselect from the gallery
-                        self.isPresentingImagePicker = true
-                    }, onDone: {
-                        // Confirm the selection
-                        self.showingConfirmationView = false
-                        // Finalize the image selection
-                    })
-                }
+        }
+    }
+    
+    private func handleMediaSelection() {
+        if let selectedImage = inputImage {
+            // An image was selected
+            itemImage = Image(uiImage: selectedImage)
+        } else if let selectedVideoURL = videoURL {
+            // A video was selected, generate a thumbnail
+            if let thumbnail = generateThumbnail(for: selectedVideoURL) {
+                itemImage = Image(uiImage: thumbnail)
+            } else {
+                // Fallback if thumbnail generation fails
+                itemImage = Image(systemName: "video.fill")
             }
         }
     }
 
-    private func addNewItem() {
-        guard !itemName.isEmpty, !itemPrice.isEmpty, !selectedSize.isEmpty, let price = Double(itemPrice), !selectedCategory.isEmpty, inputImage != nil else { return }
-        let newItem = ItemForSale(name: itemName, description: itemDescription, price: price, size: selectedSize, color: itemColor, image: inputImage)
-        itemsForSale.append(newItem)
-        presentationMode.wrappedValue.dismiss()
+    private func generateThumbnail(for url: URL) -> UIImage? {
+        let asset = AVAsset(url: url)
+        let assetImageGenerator = AVAssetImageGenerator(asset: asset)
+        assetImageGenerator.appliesPreferredTrackTransform = true
+        
+        let timestamp = CMTime(seconds: 1, preferredTimescale: 60)
+        
+        do {
+            let imageRef = try assetImageGenerator.copyCGImage(at: timestamp, actualTime: nil)
+            return UIImage(cgImage: imageRef)
+        } catch {
+            print(error.localizedDescription)
+            return nil
+        }
     }
 
 
+    private func addNewItem() {
+        guard !itemName.isEmpty, let price = Double(itemPrice), !selectedCategory.isEmpty else { return }
+
+        let completion: (Result<URL, Error>) -> Void = { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let url):
+                    self.createItemWithMedia(url: url.absoluteString, isVideo: self.videoURL != nil)
+                    self.presentationMode.wrappedValue.dismiss()
+                case .failure(let error):
+                    print("Upload error: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        if let inputImage = self.inputImage {
+            FirebaseStorageManager.shared.uploadImageToStorage(inputImage, completion: completion)
+        } else if let videoURL = self.videoURL {
+            // Adjust as necessary for copying and uploading from the new location
+            let fileManager = FileManager.default
+            let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let destinationPath = documentsDirectory.appendingPathComponent(videoURL.lastPathComponent)
+            
+            do {
+                if fileManager.fileExists(atPath: destinationPath.path) {
+                    try fileManager.removeItem(at: destinationPath)
+                }
+                try fileManager.copyItem(at: videoURL, to: destinationPath)
+                
+                // Now upload from the new location
+                FirebaseStorageManager.shared.uploadVideoToStorage(destinationPath, completion: completion)
+            } catch {
+                print("File copy error: \(error.localizedDescription)")
+                // Handle the error, possibly calling completion(.failure(error))
+            }
+        }
+    }
+
+    private func createItemWithMedia(url: String, isVideo: Bool) {
+        let newItem = ItemForSale(name: itemName, description: itemDescription, price: Double(itemPrice) ?? 0.0, size: selectedSize, color: itemColor, mediaUrl: url, isVideo: isVideo)
+        itemsForSale.append(newItem)
+        presentationMode.wrappedValue.dismiss()
+    }
+    
     private var itemImageSection: some View {
-        Section(header: Text("Item Media")) {
+        Section(header: Text("Item Image")) {
             Button(action: {
-                self.showingSourcePicker = true
+                showingSourcePicker = true
             }) {
                 ZStack {
                     if let itemImage = itemImage {
                         itemImage
                             .resizable()
                             .scaledToFit()
-                            .frame(maxWidth: .infinity, maxHeight: 180) // Larger frame for selected image
+                            .frame(maxWidth: .infinity, maxHeight: 180) // Larger frame for selected image or video placeholder
                     } else {
                         // Smaller representation for the add button
                         HStack {
@@ -102,20 +156,19 @@ struct AddItemView: View {
             }
         }
         .actionSheet(isPresented: $showingSourcePicker) {
-            ActionSheet(title: Text("Select Image or Video"), message: Text("Choose a source"), buttons: [
+            ActionSheet(title: Text("Select Media"), message: Text("Choose a source"), buttons: [
                 .default(Text("Camera")) {
                     self.sourceType = .camera
-                    self.isPresentingImagePicker = true
+                    self.isPresentingMediaPicker = true
                 },
                 .default(Text("Photo Library")) {
                     self.sourceType = .photoLibrary
-                    self.isPresentingImagePicker = true
+                    self.isPresentingMediaPicker = true
                 },
                 .cancel()
             ])
         }
     }
-
 
     private var itemNameSection: some View {
             Section(header: Text("Item Name")) {
@@ -174,16 +227,39 @@ struct AddItemView: View {
 
 
     private var addItemButtonSection: some View {
-            Section {
-                Button("Add Item") {
-                    guard !itemName.isEmpty, !selectedSize.isEmpty, let price = Double(itemPrice) else { return }
-                    let newItem = ItemForSale(name: itemName, description: itemDescription, price: price, size: selectedSize, color: itemColor, image: inputImage)
-                    itemsForSale.append(newItem)
-                    presentationMode.wrappedValue.dismiss()
+        Section {
+            Button("Add Item") {
+                // Ensure required fields are filled
+                guard !itemName.isEmpty, let price = Double(itemPrice), !selectedSize.isEmpty, !selectedCategory.isEmpty else { return }
+                
+                // Handle image upload if present
+                if let inputImage = self.inputImage {
+                    FirebaseStorageManager.shared.uploadImageToStorage(inputImage) { result in
+                        switch result {
+                        case .success(let url):
+                            self.createItemWithMedia(url: url.absoluteString, isVideo: false)
+                        case .failure(let error):
+                            print("Image upload error: \(error.localizedDescription)")
+                        }
+                    }
                 }
-                .disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty)
+                
+                // Handle video upload if present
+                if let videoURL = self.videoURL {
+                    FirebaseStorageManager.shared.uploadVideoToStorage(videoURL) { result in
+                        switch result {
+                        case .success(let url):
+                            self.createItemWithMedia(url: url.absoluteString, isVideo: true)
+                        case .failure(let error):
+                            print("Video upload error: \(error.localizedDescription)")
+                        }
+                    }
+                }
             }
+            .disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || (inputImage == nil && videoURL == nil))
         }
+    }
+
     
 func loadImage() {
     guard let inputImage = inputImage else { return }
@@ -208,6 +284,8 @@ struct ItemForSale: Identifiable {
     var size: String
     var color: Color
     var image: UIImage?
+    var mediaUrl: String
+    var isVideo: Bool
 }
 
 

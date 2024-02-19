@@ -1,14 +1,14 @@
 //
-//  ImagePickerViiew.swift
+//  UniversalMediaPickerView.swift
 //  clearoutt
 //
-//  Created by Bolanle Adisa on 2/1/24.
+//  Created by Bolanle Adisa on 2/18/24.
 //
 
 import SwiftUI
+import UIKit
 
-struct ImagePickerView: UIViewControllerRepresentable {
-    @Binding var image: Image?
+struct UniversalMediaPickerView: UIViewControllerRepresentable {
     @Binding var inputImage: UIImage?
     @Binding var videoURL: URL?
     var completion: (() -> Void)?
@@ -18,7 +18,8 @@ struct ImagePickerView: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = sourceType
-        picker.mediaTypes = ["public.image", "public.movie"] // Include both image and movie types
+        // Allow both images and videos
+        picker.mediaTypes = ["public.image", "public.movie"]
         return picker
     }
 
@@ -29,17 +30,19 @@ struct ImagePickerView: UIViewControllerRepresentable {
     }
 
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        var parent: ImagePickerView
+        var parent: UniversalMediaPickerView
 
-        init(_ parent: ImagePickerView) {
+        init(_ parent: UniversalMediaPickerView) {
             self.parent = parent
         }
 
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            // Handle image selection
             if let uiImage = info[.originalImage] as? UIImage {
-                parent.image = Image(uiImage: uiImage)
                 parent.inputImage = uiImage
-            } else if let videoUrl = info[.mediaURL] as? URL {
+            }
+            // Handle video selection
+            if let videoUrl = info[.mediaURL] as? URL {
                 parent.videoURL = videoUrl
             }
             parent.completion?()
