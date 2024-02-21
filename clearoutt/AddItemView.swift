@@ -25,10 +25,14 @@ struct AddItemView: View {
     @State private var showingSourcePicker = false
     @State private var videoURL: URL?
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var sellOrRentOption: String = ""
+
+
 
 
     let sizes = ["XS", "S", "M", "L", "XL", "XXL"]
     let categories = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes", "Electronics", "Dorm Essentials", "Books"]
+    let sellOrRentOptions = ["Sell", "Rent"]
     let currencyFormatter = NumberFormatter.currencyFormatter()
 
     var body: some View {
@@ -41,11 +45,14 @@ struct AddItemView: View {
                 itemSizeSection
                 itemColorSection
                 categorySection
+                if ["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) {
+                                sellOrRentSection
+                            }
             }
             .navigationTitle("Add New Item")
             .navigationBarItems(trailing: Button("Done") {
                 addNewItem()
-            }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || (inputImage == nil && videoURL == nil)))
+            }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || (["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) && sellOrRentOption.isEmpty) || (inputImage == nil && videoURL == nil)))
             .sheet(isPresented: $isPresentingMediaPicker) {
                 UniversalMediaPickerView(inputImage: $inputImage, videoURL: $videoURL, completion: handleMediaSelection, sourceType: sourceType)
             }
@@ -85,7 +92,7 @@ struct AddItemView: View {
 
 
     private func addNewItem() {
-        guard !itemName.isEmpty, let price = Double(itemPrice), !selectedCategory.isEmpty else { return }
+        guard !itemName.isEmpty, let price = Double(itemPrice), !selectedCategory.isEmpty, !(["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) && sellOrRentOption.isEmpty) else { return }
 
         let completion: (Result<URL, Error>) -> Void = { result in
             DispatchQueue.main.async {
@@ -123,7 +130,7 @@ struct AddItemView: View {
     }
 
     private func createItemWithMedia(url: String, isVideo: Bool) {
-        let newItem = ItemForSale(name: itemName, description: itemDescription, price: Double(itemPrice) ?? 0.0, size: selectedSize, color: itemColor, mediaUrl: url, isVideo: isVideo)
+        let newItem = ItemForSale(name: itemName, description: itemDescription, price: Double(itemPrice) ?? 0.0, size: selectedSize, color: itemColor, mediaUrl: url, isVideo: isVideo, sellOrRent: sellOrRentOption)
         itemsForSale.append(newItem)
         presentationMode.wrappedValue.dismiss()
     }
@@ -224,6 +231,17 @@ struct AddItemView: View {
             .pickerStyle(MenuPickerStyle()) // Use MenuPickerStyle for compact presentation
         }
     }
+    
+    private var sellOrRentSection: some View {
+        Section(header: Text("Sell or Rent")) {
+            Picker("Sell or Rent", selection: $sellOrRentOption) {
+                ForEach(sellOrRentOptions, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(SegmentedPickerStyle())
+        }
+    }
 
 
     private var addItemButtonSection: some View {
@@ -286,6 +304,7 @@ struct ItemForSale: Identifiable {
     var image: UIImage?
     var mediaUrl: String
     var isVideo: Bool
+    var sellOrRent: String
 }
 
 
