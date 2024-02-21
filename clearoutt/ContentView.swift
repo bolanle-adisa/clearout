@@ -9,52 +9,38 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var userSession: UserSession
-    @State private var selectedTab = 0
-    @State private var showingProfile = false
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            BuyView()
+        TabView {
+            HomeView()
                 .tabItem {
-                    Label("Buy", systemImage: "bag.fill")
+                    Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
 
-            RentView()
+            ShopView()
                 .tabItem {
-                    Label("Rent", systemImage: "hourglass.bottomhalf.fill")
+                    Label("Shop", systemImage: "cart.fill")
                 }
                 .tag(1)
 
-            SellView()
+            BagView()
                 .tabItem {
-                    Label("Sell", systemImage: "tag.fill")
+                    Label("Bag", systemImage: "bag.fill")
                 }
                 .tag(2)
 
-            DonateView()
+            WishlistView()
                 .tabItem {
-                    Label("Donate", systemImage: "gift.fill")
+                    Label("Wishlist", systemImage: "heart.fill")
                 }
                 .tag(3)
 
-            Group {
-                if userSession.isAuthenticated {
-                    UserProfileTwoView()
-                } else {
-                    UserProfileView(showingProfile: $showingProfile) // Pass the binding here
-                        .environmentObject(userSession)
+            UserProfileView()
+                .tabItem {
+                    Label("Me", systemImage: "person.crop.circle.fill")
                 }
-            }
-            .tabItem {
-                Label("Me", systemImage: "person.crop.circle.fill")
-            }
-            .tag(4)
-        }
-        .onReceive(userSession.$isAuthenticated) { isAuthenticated in
-            if isAuthenticated {
-                selectedTab = 4
-            }
+                .tag(4)
         }
     }
 }
@@ -66,3 +52,4 @@ struct ContentView_Previews: PreviewProvider {
             .environmentObject(UserSession())
     }
 }
+
