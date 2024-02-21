@@ -27,6 +27,7 @@ struct ContentView: View {
                 .tag(1)
 
             SellView()
+                .environmentObject(userSession)
                 .tabItem {
                     Label("Sell", systemImage: "tag.fill")
                 }

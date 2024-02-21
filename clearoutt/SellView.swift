@@ -16,6 +16,8 @@ struct SellView: View {
     @State private var showDetailView = false
     @State private var showingDeleteConfirmation = false
     @State private var indexSetToDelete: IndexSet?
+    @EnvironmentObject var userSession: UserSession
+    @State private var showingLoginAlert = false
 
     var body: some View {
         NavigationView {
@@ -26,7 +28,12 @@ struct SellView: View {
                     .padding()
 
                 Button(action: {
-                    showingAddItemView.toggle()
+                    if userSession.isAuthenticated {
+                        showingAddItemView.toggle()
+                    } else {
+                        // Here, instead of toggling showingAddItemView, show an alert or another mechanism to inform the user they must log in
+                        showingLoginAlert = true // Assume you have @State private var showingLoginAlert = false
+                    }
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill").foregroundColor(.white)
@@ -38,6 +45,14 @@ struct SellView: View {
                     .cornerRadius(10)
                 }
                 .padding(.horizontal)
+                .alert(isPresented: $showingLoginAlert) {
+                    Alert(
+                        title: Text("Not Logged In"),
+                        message: Text("You must be logged in to add an item."),
+                        dismissButton: .default(Text("OK"))
+                    )
+                }
+
 
                 if itemsForSale.isEmpty {
                     Spacer()
@@ -71,6 +86,7 @@ struct SellView: View {
                         }
                         .onDelete(perform: deleteItems)
                     }
+                    Spacer();
                 }
             }
             .alert("Delete Item?", isPresented: $showingDeleteConfirmation, presenting: indexSetToDelete) { indexSet in
