@@ -11,38 +11,38 @@ struct ContentView: View {
     @EnvironmentObject var userSession: UserSession
 
     var body: some View {
-            TabView {
-                BuyView()
-                    .tabItem {
-                        Label("Buy", systemImage: "bag.fill")
-                    }
-                    .tag(0)
+        TabView {
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
+                .tag(0)
 
-                RentView()
-                    .tabItem {
-                        Label("Rent", systemImage: "hourglass.bottomhalf.fill")
-                    }
-                    .tag(1)
+            ShopView()
+                .tabItem {
+                    Label("Shop", systemImage: "cart.fill")
+                }
+                .tag(1)
 
-                SellView()
-                    .tabItem {
-                        Label("Sell", systemImage: "tag.fill")
-                    }
-                    .tag(2)
+            BagView()
+                .tabItem {
+                    Label("Bag", systemImage: "bag.fill")
+                }
+                .tag(2)
 
-                DonateView()
-                    .tabItem {
-                        Label("Donate", systemImage: "gift.fill")
-                    }
-                    .tag(3)
+            WishlistView()
+                .tabItem {
+                    Label("Wishlist", systemImage: "heart.fill")
+                }
+                .tag(3)
 
-                UserProfileView()
-                    .tabItem {
-                        Label("Me", systemImage: "person.crop.circle.fill")
-                    }
-                    .tag(4)
-            }
+            UserProfileView()
+                .tabItem {
+                    Label("Me", systemImage: "person.crop.circle.fill")
+                }
+                .tag(4)
         }
+    }
 }
 
 // Preview
