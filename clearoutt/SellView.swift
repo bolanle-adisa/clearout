@@ -93,6 +93,11 @@ struct SellView: View {
             .onAppear {
                 fetchItemsForSale()
             }
+            onReceive(userSession.$isAuthenticated) { isAuthenticated in
+                if !isAuthenticated {
+                    self.itemsForSale.removeAll() // Clear items if the user logs out
+                }
+            }
         }
     }
     
@@ -133,6 +138,7 @@ struct SellView: View {
 
     private func fetchItemsForSale() {
         guard let userId = Auth.auth().currentUser?.uid else {
+            self.itemsForSale.removeAll()
             print("User not logged in")
             return
         }

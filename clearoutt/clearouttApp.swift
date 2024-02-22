@@ -7,19 +7,20 @@
 
 import SwiftUI
 import Firebase
+import FirebaseAuth
 
 @main
 struct clearouttApp: App {
-    
+    @StateObject var userSession = UserSession()
+
     init() {
         FirebaseApp.configure()
+        // Initial authentication state set here, but dynamic changes are handled in ContentView
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-            .environmentObject(UserSession())
+            ContentView().environmentObject(userSession)
         }
     }
 }
-
