@@ -69,6 +69,10 @@
 		61493B752B72A53F0059F778 /* FirebaseStorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61493B742B72A53F0059F778 /* FirebaseStorageManager.swift */; };
 		61E46DF72B6B76430071B35B /* CustomCameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E46DF62B6B76430071B35B /* CustomCameraView.swift */; };
 		61F562442B85C9DA0004E8B5 /* DonationCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F562432B85C9D90004E8B5 /* DonationCenter.swift */; };
+		61F5624C2B870C970004E8B5 /* ItemDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F5624B2B870C960004E8B5 /* ItemDetailsView.swift */; };
+		61F5624E2B870E3C0004E8B5 /* ItemDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F5624D2B870E3C0004E8B5 /* ItemDetails.swift */; };
+		61F562502B8734120004E8B5 /* ColorChoices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F5624F2B8734110004E8B5 /* ColorChoices.swift */; };
+		61F562522B876A540004E8B5 /* ItemRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F562512B876A540004E8B5 /* ItemRow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +125,10 @@
 		61493B742B72A53F0059F778 /* FirebaseStorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseStorageManager.swift; sourceTree = "<group>"; };
 		61E46DF62B6B76430071B35B /* CustomCameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCameraView.swift; sourceTree = "<group>"; };
 		61F562432B85C9D90004E8B5 /* DonationCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonationCenter.swift; sourceTree = "<group>"; };
+		61F5624B2B870C960004E8B5 /* ItemDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemDetailsView.swift; sourceTree = "<group>"; };
+		61F5624D2B870E3C0004E8B5 /* ItemDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemDetails.swift; sourceTree = "<group>"; };
+		61F5624F2B8734110004E8B5 /* ColorChoices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorChoices.swift; sourceTree = "<group>"; };
+		61F562512B876A540004E8B5 /* ItemRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,6 +229,10 @@
 				613182B52B83384100DB13CE /* VideoPlayerView.swift */,
 				613182B72B83E4D300DB13CE /* DonateViewModel.swift */,
 				61F562432B85C9D90004E8B5 /* DonationCenter.swift */,
+				61F5624B2B870C960004E8B5 /* ItemDetailsView.swift */,
+				61F5624D2B870E3C0004E8B5 /* ItemDetails.swift */,
+				61F5624F2B8734110004E8B5 /* ColorChoices.swift */,
+				61F562512B876A540004E8B5 /* ItemRow.swift */,
 				610E3AC62B6228190081A3F0 /* GoogleService-Info.plist */,
 				611179C52B5EDACB00989C42 /* Assets.xcassets */,
 				611179C72B5EDACB00989C42 /* Preview Content */,
@@ -418,7 +430,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				61F562522B876A540004E8B5 /* ItemRow.swift in Sources */,
+				61F5624C2B870C970004E8B5 /* ItemDetailsView.swift in Sources */,
 				610E3AC32B6164970081A3F0 /* DonateView.swift in Sources */,
+				61F5624E2B870E3C0004E8B5 /* ItemDetails.swift in Sources */,
 				61493B732B70D8440059F778 /* AddItemView.swift in Sources */,
 				613182B42B83382300DB13CE /* ImageViewer.swift in Sources */,
 				613182AE2B82FDD500DB13CE /* UniversalMediaPickerView.swift in Sources */,
@@ -436,6 +451,7 @@
 				613182B82B83E4D400DB13CE /* DonateViewModel.swift in Sources */,
 				61493B752B72A53F0059F778 /* FirebaseStorageManager.swift in Sources */,
 				61F562442B85C9DA0004E8B5 /* DonationCenter.swift in Sources */,
+				61F562502B8734120004E8B5 /* ColorChoices.swift in Sources */,
 				611179F02B5EDD5A00989C42 /* BagView.swift in Sources */,
 				6142A81E2B62BFB900649BBE /* College.swift in Sources */,
 				611179F82B5EDE3A00989C42 /* UserSession.swift in Sources */,

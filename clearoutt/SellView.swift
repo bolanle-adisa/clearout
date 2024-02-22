@@ -8,16 +8,16 @@
 
 import SwiftUI
 import AVKit
+import FirebaseFirestore
+import FirebaseAuth
 
 struct SellView: View {
     @State private var itemsForSale: [ItemForSale] = []
     @State private var showingAddItemView = false
     @State private var selectedItem: ItemForSale?
-    @State private var showDetailView = false
-    @State private var showingDeleteConfirmation = false
-    @State private var indexSetToDelete: IndexSet?
     @EnvironmentObject var userSession: UserSession
     @State private var showingLoginAlert = false
+    @State private var showingItemDetailsView = false
 
     var body: some View {
         NavigationView {
@@ -26,13 +26,12 @@ struct SellView: View {
                     .font(.headline)
                     .fontWeight(.bold)
                     .padding()
-
+                
                 Button(action: {
                     if userSession.isAuthenticated {
                         showingAddItemView.toggle()
                     } else {
-                        // Here, instead of toggling showingAddItemView, show an alert or another mechanism to inform the user they must log in
-                        showingLoginAlert = true // Assume you have @State private var showingLoginAlert = false
+                        showingLoginAlert = true
                     }
                 }) {
                     HStack {
@@ -52,8 +51,7 @@ struct SellView: View {
                         dismissButton: .default(Text("OK"))
                     )
                 }
-
-
+                
                 if itemsForSale.isEmpty {
                     Spacer()
                     Text("No items for sale. Tap on 'Add Item' to start selling.")
@@ -62,60 +60,98 @@ struct SellView: View {
                         .padding(.horizontal)
                     Spacer()
                 } else {
-                    List {
-                        ForEach(itemsForSale) { item in
-                            HStack {
-                                MediaView(item: item)
-                                VStack(alignment: .leading) {
-                                    Text(item.name).font(.headline)
-                                    Text("$\(item.price, specifier: "%.2f")").font(.subheadline)
-                                }
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedItem = item
-                                showDetailView = true
-                            }
-                            .contextMenu {
-                                Button(action: {
-                                    markItemAsSold(item: item)
-                                }) {
-                                    Label("Mark as Sold", systemImage: "checkmark.circle")
-                                }
+                    List(itemsForSale) { item in
+                        ZStack {
+                            ItemRow(item: item)
+                            .frame(minHeight: 80)
+
+                            Button(action: {
+                                self.selectedItem = item
+                                self.showingItemDetailsView = true
+                            }) {
+                                Rectangle()
+                                    .foregroundColor(.clear)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
                         }
-                        .onDelete(perform: deleteItems)
+                        .listRowInsets(EdgeInsets())
                     }
+                    
                     Spacer();
                 }
             }
-            .alert("Delete Item?", isPresented: $showingDeleteConfirmation, presenting: indexSetToDelete) { indexSet in
-                Button("Delete", role: .destructive) {
-                    itemsForSale.remove(atOffsets: indexSet)
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: { indexSet in
-                Text("Are you sure you want to delete this item?")
-            }
+        
             .sheet(isPresented: $showingAddItemView) {
-                AddItemView(itemsForSale: $itemsForSale)
+                AddItemView(itemsForSale: $itemsForSale).environmentObject(userSession)
             }
-            .sheet(isPresented: $showDetailView) {
+            
+            .sheet(isPresented: $showingItemDetailsView) {
                 if let selectedItem = selectedItem {
-                    DetailView(selectedItem: $selectedItem)
+                    ItemDetailsView(item: selectedItem)
                 }
+            }
+            .onAppear {
+                fetchItemsForSale()
+            }
+        }
+    }
+    
+    private func itemRow(_ item: ItemForSale) -> some View {
+        HStack(spacing: 15) {
+            MediaView(item: item)
+                .frame(width: 50, height: 50)
+                .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 5) {
+                Text(item.name).font(.headline)
+                Text("$\(item.price, specifier: "%.2f")").font(.subheadline)
             }
         }
     }
 
-    private func deleteItems(at offsets: IndexSet) {
-        showingDeleteConfirmation = true
-        indexSetToDelete = offsets
+    private func mediaViewSheet() -> some View {
+        Group {
+            if let selectedItem = selectedItem, let url = URL(string: selectedItem.mediaUrl) {
+                if selectedItem.isVideo {
+                    VideoPlayerView(videoURL: url)
+                } else {
+                    ImageViewer(urlString: selectedItem.mediaUrl)
+                }
+            } else {
+                Text("No item selected")
+            }
+        }
     }
 
-    private func markItemAsSold(item: ItemForSale) {
-        if let index = itemsForSale.firstIndex(where: { $0.id == item.id }) {
-            itemsForSale.remove(at: index)
+    private func itemDetailsViewSheet() -> some View {
+        Group {
+            if let selectedItem = selectedItem {
+                ItemDetailsView(item: selectedItem)
+            }
+        }
+    }
+
+    private func fetchItemsForSale() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            return
+        }
+
+        let db = Firestore.firestore()
+        db.collection("itemsForSale").whereField("userId", isEqualTo: userId).getDocuments { snapshot, error in
+            if let error = error {
+                print("Error fetching items: \(error)")
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                print("No documents found")
+                return
+            }
+
+            self.itemsForSale = documents.compactMap { document -> ItemForSale? in
+                try? document.data(as: ItemForSale.self)
+            }
         }
     }
 }
@@ -126,17 +162,24 @@ struct MediaView: View {
     var body: some View {
         Group {
             if item.isVideo {
-                Image(systemName: "video.fill")
+                Image(systemName: "video.fill") // Keep this for videos
                     .resizable()
-                    .scaledToFit()
                     .frame(width: 50, height: 50)
                     .clipShape(Circle())
             } else {
                 AsyncImage(url: URL(string: item.mediaUrl)) { phase in
                     switch phase {
                     case .empty: ProgressView()
-                    case .success(let image): image.resizable().aspectRatio(contentMode: .fill).frame(width: 50, height: 50).clipShape(Circle())
-                    case .failure: Image(systemName: "photo").resizable().frame(width: 50, height: 50).clipShape(Circle())
+                    case .success(let image):
+                        image.resizable()
+                             .aspectRatio(contentMode: .fill)
+                             .frame(width: 50, height: 50)
+                             .clipShape(Circle())
+                    case .failure:
+                        Image(systemName: "photo")
+                             .resizable()
+                             .frame(width: 50, height: 50)
+                             .clipShape(Circle())
                     @unknown default: EmptyView()
                     }
                 }

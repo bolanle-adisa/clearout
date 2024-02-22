@@ -7,6 +7,9 @@
 
 import SwiftUI
 import AVFoundation
+import FirebaseFirestore
+import FirebaseAuth
+import FirebaseFirestoreSwift
 
 struct AddItemView: View {
     @Binding var itemsForSale: [ItemForSale]
@@ -16,7 +19,6 @@ struct AddItemView: View {
     @State private var itemDescription: String = ""
     @State private var itemPrice: String = ""
     @State private var selectedSize: String = ""
-    @State private var itemColor: Color = .white
     @State private var isPresentingMediaPicker = false
     @State private var inputImage: UIImage?
     @State private var itemImage: Image?
@@ -26,6 +28,8 @@ struct AddItemView: View {
     @State private var videoURL: URL?
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var sellOrRentOption: String = ""
+    @State private var selectedColorIndex = 0
+
 
 
 
@@ -130,9 +134,43 @@ struct AddItemView: View {
     }
 
     private func createItemWithMedia(url: String, isVideo: Bool) {
-        let newItem = ItemForSale(name: itemName, description: itemDescription, price: Double(itemPrice) ?? 0.0, size: selectedSize, color: itemColor, mediaUrl: url, isVideo: isVideo, sellOrRent: sellOrRentOption)
-        itemsForSale.append(newItem)
-        presentationMode.wrappedValue.dismiss()
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("User not logged in")
+            return
+        }
+        
+        let selectedColorName = colorChoices[selectedColorIndex].name
+            let newItem = ItemForSale(
+            name: itemName,
+            description: itemDescription,
+            price: Double(itemPrice) ?? 0.0,
+            size: selectedSize,
+            color: selectedColorName,
+            mediaUrl: url,
+            isVideo: isVideo,
+            sellOrRent: sellOrRentOption,
+            userId: userId // Add this line
+        )
+        
+        let db = Firestore.firestore()
+        db.collection("itemsForSale").addDocument(data: [
+            "name": newItem.name,
+            "description": newItem.description,
+            "price": newItem.price,
+            "size": newItem.size,
+            "color": newItem.color.description, // You might need a better way to encode color
+            "mediaUrl": newItem.mediaUrl,
+            "isVideo": newItem.isVideo,
+            "sellOrRent": newItem.sellOrRent,
+            "userId": newItem.userId, // Ensure this is included
+            "timestamp": FieldValue.serverTimestamp()
+        ]) { error in
+            if let error = error {
+                print("Error adding document: \(error)")
+            } else {
+                self.presentationMode.wrappedValue.dismiss()
+            }
+        }
     }
     
     private var itemImageSection: some View {
@@ -214,9 +252,19 @@ struct AddItemView: View {
             }
         }
 
-        private var itemColorSection: some View {
+    private var itemColorSection: some View {
             Section(header: Text("Color")) {
-                ColorPicker("Select color", selection: $itemColor)
+                Picker("Select color", selection: $selectedColorIndex) {
+                    ForEach(colorChoices.indices, id: \.self) { index in
+                        HStack {
+                            colorChoices[index].color
+                                .frame(width: 20, height: 20)
+                                .cornerRadius(10)
+                            Text(colorChoices[index].name)
+                        }
+                    }
+                }
+                .pickerStyle(WheelPickerStyle())
             }
         }
 
@@ -294,17 +342,18 @@ extension NumberFormatter {
     }
 }
 
-struct ItemForSale: Identifiable {
-    let id = UUID()
+struct ItemForSale: Identifiable, Codable {
+    @DocumentID var id: String?
     var name: String
     var description: String
     var price: Double
     var size: String
-    var color: Color
-    var image: UIImage?
+    var color: String
     var mediaUrl: String
     var isVideo: Bool
     var sellOrRent: String
+    var userId: String
+    @ServerTimestamp var timestamp: Date?
 }
 
 
