@@ -52,7 +52,15 @@ struct UserProfileTwoView: View {
                 SettingRowTwo(icon: "list.bullet.rectangle.portrait", title: "Transaction History")
                 SettingRowTwo(icon: "questionmark.circle", title: "Help Center")
                 SettingRowTwo(icon: "gearshape", title: "Settings")
-                SettingRowTwo(icon: "arrow.right.square", title: "Log Out")
+                
+                Button(action: logoutUser) {
+                    Text("Log Out")
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(10)
+                }
             }
             
             Spacer() // Pushes everything to the top
@@ -80,6 +88,16 @@ struct UserProfileTwoView: View {
             }
         }
     }
+    
+    private func logoutUser() {
+        do {
+            try Auth.auth().signOut()
+            userSession.isAuthenticated = false // Update your user session state here
+        } catch let signOutError as NSError {
+            print("Error signing out: %@", signOutError)
+        }
+    }
+    
     
     struct SettingRowTwo: View {
         let icon: String
