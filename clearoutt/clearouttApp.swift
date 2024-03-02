@@ -12,6 +12,7 @@ import FirebaseAuth
 @main
 struct clearouttApp: App {
     @StateObject var userSession = UserSession()
+    @StateObject var cartManager = CartManager.shared
 
     init() {
         FirebaseApp.configure()
@@ -20,7 +21,9 @@ struct clearouttApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView().environmentObject(userSession)
+            ContentView()
+                .environmentObject(userSession)
+                .environmentObject(cartManager)
         }
     }
 }

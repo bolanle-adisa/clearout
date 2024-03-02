@@ -1,18 +1,19 @@
 //
-//  ItemDetailsView.swift
+//  ItemCustomerView.swift
 //  clearoutt
 //
-//  Created by Bolanle Adisa on 2/21/24.
+//  Created by Bolanle Adisa on 2/26/24.
 //
 
 import SwiftUI
 import FirebaseFirestore
 import FirebaseFirestoreSwift
 
-struct ItemDetailsView: View {
+struct ItemCustomerView: View {
     let item: ItemForSaleAndRent
-    @State private var showingMarkAsSoldConfirmation = false
-    @State private var showingDeleteConfirmation = false
+    @State private var showingAddToCartConfirmation = false
+    @State private var showingAddToWishlistConfirmation = false
+    @EnvironmentObject var cartManager: CartManager
 
     var body: some View {
         ScrollView {
@@ -33,13 +34,9 @@ struct ItemDetailsView: View {
                     detailRow(title: "Description", value: item.description ?? "No description", icon: "text.alignleft")
                     detailRow(title: "Sale Price", value: item.price ?? 0 > 0 ? String(format: "$%.2f", item.price!) : "Not Applicable", icon: "dollarsign.circle")
                     detailRow(title: "Rental Price", value: item.rentPrice ?? 0 > 0 ? String(format: "$%.2f", item.rentPrice!) : "Not Applicable", icon: "dollarsign.circle")
-                    detailRow(title: "Rental Period", value: item.rentPeriod ?? "Not Applicable", icon: "calendar")
+                    detailRow(title: "Rental Period", value: item.rentPeriod != nil && item.rentPeriod != "Not Applicable" ? item.rentPeriod! : "Not Applicable", icon: "calendar")
                     detailRow(title: "Size", value: item.size ?? "N/A", icon: "ruler")
                     detailRow(title: "Color", value: item.color ?? "No color specified", icon: "paintpalette")
-
-                    if let timestamp = item.timestamp {
-                        detailRow(title: "Posted on", value: timestamp, formatter: itemDateFormatter, icon: "calendar")
-                    }
                 }
                 .padding()
                 .background(Color(UIColor.systemBackground))
@@ -47,26 +44,18 @@ struct ItemDetailsView: View {
                 .shadow(radius: 5)
                 .padding()
                 
-                actionButtons
+                customerActions
             }
         }
         .navigationTitle("Item Details")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Have you sold this item?", isPresented: $showingMarkAsSoldConfirmation) {
-            Button("Yes", role: .destructive, action: markAsSold)
-            Button("No", role: .cancel) {}
-        }
-        .alert("You no longer want to sell this item?", isPresented: $showingDeleteConfirmation) {
-            Button("Delete", role: .destructive, action: deleteItem)
-            Button("Cancel", role: .cancel) {}
-        }
     }
     
     @ViewBuilder
     private var mediaSection: some View {
         if item.isVideo, let url = URL(string: item.mediaUrl) {
             VideoPlayerView(videoURL: url)
-                .frame(height: 300) // Specify a height to prevent it from taking the entire screen
+                .frame(height: 300)
                 .cornerRadius(12)
                 .aspectRatio(contentMode: .fit)
         } else if let url = URL(string: item.mediaUrl) {
@@ -89,7 +78,6 @@ struct ItemDetailsView: View {
         }
     }
 
-    
     private func detailRow(title: String, value: String, icon: String) -> some View {
         HStack {
             Label(title, systemImage: icon)
@@ -100,62 +88,50 @@ struct ItemDetailsView: View {
         }
     }
     
-    private func detailRow(title: String, value: Date, formatter: DateFormatter, icon: String) -> some View {
-        HStack {
-            Label(title, systemImage: icon)
-                .foregroundColor(.secondary)
-            Spacer()
-            Text(value, formatter: formatter)
-                .fontWeight(.semibold)
-        }
-    }
-    
-    private var actionButtons: some View {
-            VStack(spacing: 20) {
-                Button(action: { showingMarkAsSoldConfirmation = true }) {
-                    Text("Mark as Sold")
-                        .foregroundColor(.white)
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(10)
-                }
-                .padding(.horizontal)
-
-                Button(action: { showingDeleteConfirmation = true }) {
-                    Text("Delete")
-                        .foregroundColor(.white)
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(10)
-                }
-                .padding(.horizontal)
+    private var customerActions: some View {
+        HStack(spacing: 20) {
+            Button(action: {
+                print("Add to Cart button tapped")
+                cartManager.addToCart(item: item)
+                print("Item supposed to be added to cart now")
+                showingAddToCartConfirmation = true
+                print("showingAddToCartConfirmation set to true, alert should be presented")
+            }) {
+                Text("Add to Cart")
+                    .foregroundColor(.white)
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .cornerRadius(10)
             }
-            .padding(.top)
+            .padding(.horizontal)
+            .alert(isPresented: $showingAddToCartConfirmation) {
+                Alert(
+                    title: Text("Added to Cart"),
+                    message: Text("\(item.name) has been added to your cart."),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+
+            Button(action: {
+                showingAddToWishlistConfirmation = true
+                print("Add to Wishlist button tapped")
+            }) {
+                Text("Add to Wishlist")
+                    .foregroundColor(.white)
+                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .cornerRadius(10)
+            }
+            .padding(.horizontal)
         }
-    
-    private func markAsSold() {
-            // Implement the functionality to mark the item as sold
-            print("Item marked as sold")
-        }
-        
-    private func deleteItem() {
-        // Implement the functionality to delete the item
-        print("Item deleted")
+        .padding(.top)
     }
+
 }
 
-let itemDateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .long
-    formatter.timeStyle = .short
-    return formatter
-}()
-
-
-
-struct ItemDetailsView_Previews: PreviewProvider {
+struct ItemCustomerView_Previews: PreviewProvider {
     static var previews: some View {
         let dummyItem = ItemForSaleAndRent(
             id: "dummyID",
@@ -166,10 +142,10 @@ struct ItemDetailsView_Previews: PreviewProvider {
             color: "Red",
             mediaUrl: "http://example.com/sample.jpg",
             isVideo: false,
-            rentPrice: 0,
-            rentPeriod: "Not Applicable",
+            rentPrice: 0, // Assuming you have a rentPrice
+            rentPeriod: "Not Applicable", // Assuming you have a rentPeriod
             userId: "user123"
         )
-        ItemDetailsView(item: dummyItem)
+        ItemCustomerView(item: dummyItem).environmentObject(CartManager.shared)
     }
 }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ItemRow: View {
-    let item: ItemForSale
+    let item: ItemForSaleAndRent
 
     var body: some View {
         HStack(spacing: 15) {
@@ -18,8 +18,16 @@ struct ItemRow: View {
             
             VStack(alignment: .leading, spacing: 5) {
                 Text(item.name).font(.headline)
-                Text("$\(item.price, specifier: "%.2f")").font(.subheadline)
+                Group {
+                    if let salePrice = item.price, salePrice > 0 {
+                        Text("Sale: $\(salePrice, specifier: "%.2f")").font(.subheadline)
+                    }
+                    if let rentPrice = item.rentPrice, rentPrice > 0, let rentPeriod = item.rentPeriod, rentPeriod != "Not Applicable" {
+                        Text("Rent: $\(rentPrice, specifier: "%.2f") / \(rentPeriod)").font(.subheadline)
+                    }
+                }
             }
+
             Spacer() // This pushes everything to the left and allows the row to expand fully
         }
         .frame(maxWidth: .infinity) // Ensure the HStack fills the available width
