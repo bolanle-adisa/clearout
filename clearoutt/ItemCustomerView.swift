@@ -14,7 +14,9 @@ struct ItemCustomerView: View {
     @State private var showingAddToCartConfirmation = false
     @State private var showingAddToWishlistConfirmation = false
     @EnvironmentObject var cartManager: CartManager
-
+    @State private var sellOrRentOption: CartManager.CartOption?
+    
+    
     var body: some View {
         ScrollView {
             VStack {
@@ -63,9 +65,9 @@ struct ItemCustomerView: View {
                 switch phase {
                 case .success(let image):
                     image.resizable()
-                         .aspectRatio(contentMode: .fit)
-                         .frame(height: 300)
-                         .cornerRadius(12)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 300)
+                        .cornerRadius(12)
                 case .failure(_):
                     Image(systemName: "photo")
                         .aspectRatio(contentMode: .fit)
@@ -77,7 +79,7 @@ struct ItemCustomerView: View {
             }
         }
     }
-
+    
     private func detailRow(title: String, value: String, icon: String) -> some View {
         HStack {
             Label(title, systemImage: icon)
@@ -88,47 +90,105 @@ struct ItemCustomerView: View {
         }
     }
     
+    private var saleOrRentSection: some View {
+        Group {
+            if let salePrice = item.price, let rentPrice = item.rentPrice, let rentPeriod = item.rentPeriod {
+                // Both sell and rent available
+                VStack {
+                    Button("Sell for \(String(format: "$%.2f", salePrice))") {
+                        cartManager.addToCart(item: item, option: .sell)
+                    }
+                    
+                    Button("Rent for \(String(format: "$%.2f", rentPrice)) / \(rentPeriod)") {
+                        cartManager.addToCart(item: item, option: .rent)
+                    }
+                }
+            } else {
+                // Handling for items with only one option available will be specific to your app's logic
+            }
+        }
+    }
+    
     private var customerActions: some View {
-        HStack(spacing: 20) {
-            Button(action: {
-                print("Add to Cart button tapped")
-                cartManager.addToCart(item: item)
-                print("Item supposed to be added to cart now")
-                showingAddToCartConfirmation = true
-                print("showingAddToCartConfirmation set to true, alert should be presented")
-            }) {
-                Text("Add to Cart")
-                    .foregroundColor(.white)
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding()
-                    .background(Color.black)
-                    .cornerRadius(10)
+        VStack(spacing: 10) {
+            // When both sale and rent options are available
+            if let salePrice = item.price, salePrice > 0,
+               let rentPrice = item.rentPrice, rentPrice > 0,
+               let rentPeriod = item.rentPeriod {
+                VStack(spacing: 10) {
+                    HStack(spacing: 20) {
+                        // Buy button
+                        Button("Buy for \(String(format: "$%.2f", salePrice))") {
+                            sellOrRentOption = .sell
+                            cartManager.addToCart(item: item, option: sellOrRentOption!)
+                            showingAddToCartConfirmation = true
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(10)
+                        
+                        // Rent button
+                        Button("Rent for \(String(format: "$%.2f", rentPrice))") {
+                            sellOrRentOption = .rent
+                            cartManager.addToCart(item: item, option: sellOrRentOption!)
+                            showingAddToCartConfirmation = true
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(10)
+                        
+                        Button(action: {
+                            // Placeholder action for adding to wishlist
+                            print("Add \(item.name) to wishlist")
+                        }) {
+                            Image(systemName: "heart")
+                                .foregroundColor(.red)
+                        }
+                    }
+                }
+            } else {
+                // Only one option available (sale or rent), buttons shown side by side
+                HStack(spacing: 20) {
+                    if let salePrice = item.price, salePrice > 0 {
+                        // Buy button for sale option
+                        Button("Buy for \(String(format: "$%.2f", salePrice))") {
+                            sellOrRentOption = .sell
+                            cartManager.addToCart(item: item, option: sellOrRentOption!)
+                            showingAddToCartConfirmation = true
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(10)
+                    }
+                    else if let rentPrice = item.rentPrice, rentPrice > 0 {
+                        // Rent button for rent option
+                        Button("Rent for \(String(format: "$%.2f", rentPrice))") {
+                            sellOrRentOption = .rent
+                            cartManager.addToCart(item: item, option: sellOrRentOption!)
+                            showingAddToCartConfirmation = true
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(10)
+                    }
+                    
+                    // Add to Wishlist button, shown side by side when only one option is available
+                    Button(action: {
+                        
+                        print("Add \(item.name) to wishlist")
+                    }) {
+                        Image(systemName: "heart")
+                            .foregroundColor(.red)
+                    }
+                }
             }
-            .padding(.horizontal)
-            .alert(isPresented: $showingAddToCartConfirmation) {
-                Alert(
-                    title: Text("Added to Cart"),
-                    message: Text("\(item.name) has been added to your cart."),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
-
-            Button(action: {
-                showingAddToWishlistConfirmation = true
-                print("Add to Wishlist button tapped")
-            }) {
-                Text("Add to Wishlist")
-                    .foregroundColor(.white)
-                    .frame(minWidth: 0, maxWidth: .infinity)
-                    .padding()
-                    .background(Color.black)
-                    .cornerRadius(10)
-            }
-            .padding(.horizontal)
         }
         .padding(.top)
     }
-
 }
 
 struct ItemCustomerView_Previews: PreviewProvider {

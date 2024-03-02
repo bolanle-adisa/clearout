@@ -17,19 +17,18 @@ struct CartView: View {
                     .font(.headline)
                     .padding()
                 if cartManager.cartItems.isEmpty {
-                    // If the cart is empty, show a message
                     Text("Your cart is empty.\nStart shopping now!")
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(UIColor.systemBackground)) // Use the system background color
+                        .background(Color(UIColor.systemBackground))
                 } else {
                     List {
-                        ForEach(cartManager.cartItems) { item in
+                        ForEach(cartManager.cartItems) { cartItem in
                             HStack {
-                                NavigationLink(destination: ItemCustomerView(item: item).environmentObject(cartManager)) {
-                                    AsyncImage(url: URL(string: item.mediaUrl)) { phase in
+                                NavigationLink(destination: ItemCustomerView(item: cartItem.item).environmentObject(cartManager)) {
+                                    AsyncImage(url: URL(string: cartItem.item.mediaUrl)) { phase in
                                         switch phase {
                                         case .success(let image):
                                             image.resizable().aspectRatio(contentMode: .fill).frame(width: 60, height: 60).cornerRadius(10)
@@ -39,23 +38,21 @@ struct CartView: View {
                                             EmptyView()
                                         }
                                     }
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(item.name).font(.headline)
-                                    
-                                        Text("$\((item.price ?? 0.0), specifier: "%.2f")").font(.subheadline)
-                                    }
 
+                                    VStack(alignment: .leading) {
+                                        Text(cartItem.item.name).font(.headline)
+
+                                        // Display the correct price based on sell or rent option
+                                        Text("\(cartItem.option == .sell ? "Buy" : "Rent") for $\(cartItem.price, specifier: "%.2f")").font(.subheadline)
+                                    }
                                 }
                                 
                                 Spacer()
                                 
                                 Button(action: {
-                                    // Placeholder action for adding to wishlist
-                                    print("Add \(item.name) to wishlist")
+                                    print("Add \(cartItem.item.name) to wishlist")
                                 }) {
-                                    Image(systemName: "heart")
-                                        .foregroundColor(.red)
+                                    Image(systemName: "heart").foregroundColor(.red)
                                 }
                             }
                         }
@@ -63,8 +60,9 @@ struct CartView: View {
                     }
                 }
 
-                let subtotal = cartManager.cartItems.reduce(0) { sum, item in
-                    sum + (item.price ?? 0.0)
+                // Calculate subtotal based on cart items and their respective prices
+                let subtotal = cartManager.cartItems.reduce(0) { sum, cartItem in
+                    sum + cartItem.price
                 }
 
                 VStack {
@@ -76,7 +74,6 @@ struct CartView: View {
                     .padding()
 
                     Button("Checkout") {
-                        // Implement checkout functionality
                         print("Proceed to checkout")
                     }
                     .foregroundColor(.white)
@@ -93,7 +90,7 @@ struct CartView: View {
 
     func removeItems(at offsets: IndexSet) {
         offsets.forEach { index in
-            let itemID = cartManager.cartItems[index].id ?? ""
+            let itemID = cartManager.cartItems[index].item.id ?? ""
             cartManager.removeFromCart(itemID: itemID)
         }
     }
