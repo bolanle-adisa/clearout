@@ -12,9 +12,9 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct SellView: View {
-    @State private var itemsForSale: [ItemForSale] = []
+    @State private var itemForSaleAndRent: [ItemForSaleAndRent] = []
     @State private var showingAddItemView = false
-    @State private var selectedItem: ItemForSale?
+    @State private var selectedItem: ItemForSaleAndRent?
     @EnvironmentObject var userSession: UserSession
     @State private var showingLoginAlert = false
     @State private var showingItemDetailsView = false
@@ -52,15 +52,22 @@ struct SellView: View {
                     )
                 }
                 
-                if itemsForSale.isEmpty {
+                if itemForSaleAndRent.isEmpty {
                     Spacer()
-                    Text("No items for sale. Tap on 'Add Item' to start selling.")
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                    if userSession.isAuthenticated {
+                        Text("No items for sale or rent. Tap on 'Add Item' to start selling or renting out.")
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    } else {
+                        Text("No items for sale or rent. Tap on 'Add Item' to start selling or renting out.")
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
                     Spacer()
                 } else {
-                    List(itemsForSale) { item in
+                    List(itemForSaleAndRent) { item in
                         ZStack {
                             ItemRow(item: item)
                             .frame(minHeight: 80)
@@ -82,7 +89,7 @@ struct SellView: View {
             }
         
             .sheet(isPresented: $showingAddItemView) {
-                AddItemView(itemsForSale: $itemsForSale).environmentObject(userSession)
+                AddItemView(itemsForSaleAndRent: $itemForSaleAndRent).environmentObject(userSession)
             }
             
             .sheet(isPresented: $showingItemDetailsView) {
@@ -95,13 +102,13 @@ struct SellView: View {
             }
             onReceive(userSession.$isAuthenticated) { isAuthenticated in
                 if !isAuthenticated {
-                    self.itemsForSale.removeAll() // Clear items if the user logs out
+                    self.itemForSaleAndRent.removeAll() // Clear items if the user logs out
                 }
             }
         }
     }
     
-    private func itemRow(_ item: ItemForSale) -> some View {
+    private func itemRow(_ item: ItemForSaleAndRent) -> some View {
         HStack(spacing: 15) {
             MediaView(item: item)
                 .frame(width: 50, height: 50)
@@ -109,10 +116,21 @@ struct SellView: View {
             
             VStack(alignment: .leading, spacing: 5) {
                 Text(item.name).font(.headline)
-                Text("$\(item.price, specifier: "%.2f")").font(.subheadline)
+                
+                // Check and display the sale price if available and greater than 0
+                if let salePrice = item.price, salePrice > 0 {
+                    Text("Sale: $\(salePrice, specifier: "%.2f")").font(.subheadline)
+                }
+                
+                // Check and display the rental price and period if available and the rent price is greater than 0
+                if let rentPrice = item.rentPrice, rentPrice > 0,
+                   let rentPeriod = item.rentPeriod, rentPeriod != "Not Applicable" {
+                    Text("Rent: $\(rentPrice, specifier: "%.2f") / \(rentPeriod)").font(.subheadline)
+                }
             }
         }
     }
+
 
     private func mediaViewSheet() -> some View {
         Group {
@@ -138,32 +156,39 @@ struct SellView: View {
 
     private func fetchItemsForSale() {
         guard let userId = Auth.auth().currentUser?.uid else {
-            self.itemsForSale.removeAll()
-            print("User not logged in")
+            self.itemForSaleAndRent.removeAll()
+            print("User not logged in(SellView)")
             return
         }
 
         let db = Firestore.firestore()
-        db.collection("itemsForSale").whereField("userId", isEqualTo: userId).getDocuments { snapshot, error in
+        db.collection("itemsForSaleAndRent")
+          .whereField("userId", isEqualTo: userId)
+          .getDocuments { snapshot, error in
             if let error = error {
-                print("Error fetching items: \(error)")
+                print("Error fetching items: \(error)(SellView)")
                 return
             }
 
             guard let documents = snapshot?.documents else {
-                print("No documents found")
+                print("No documents found(SellView)")
                 return
             }
+              
+              print("Successfully fetched \(documents.count) items from Firestore(SellView)")
 
-            self.itemsForSale = documents.compactMap { document -> ItemForSale? in
-                try? document.data(as: ItemForSale.self)
+            self.itemForSaleAndRent = documents.compactMap { document -> ItemForSaleAndRent? in
+                try? document.data(as: ItemForSaleAndRent.self)
             }
+              
+              print("Mapped \(self.itemForSaleAndRent.count) items successfully(SellView)")
         }
     }
+    
 }
 
 struct MediaView: View {
-    let item: ItemForSale
+    let item: ItemForSaleAndRent
 
     var body: some View {
         Group {
@@ -195,7 +220,7 @@ struct MediaView: View {
 }
 
 struct DetailView: View {
-    @Binding var selectedItem: ItemForSale?
+    @Binding var selectedItem: ItemForSaleAndRent?
 
     var body: some View {
         Group {

@@ -9,27 +9,43 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var userSession: UserSession
+    @EnvironmentObject var cartManager: CartManager
     @State private var selectedTab = 0
     @State private var showingProfile = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
             BuyView()
+                .environmentObject(CartManager.shared)
                 .tabItem {
-                    Label("Buy", systemImage: "bag.fill")
+                    Label("Shop", systemImage: "bag.fill")
                 }
                 .tag(0)
-
-            RentView()
-                .tabItem {
-                    Label("Rent", systemImage: "hourglass.bottomhalf.fill")
-                }
-                .tag(1)
 
             SellView()
                 .environmentObject(userSession)
                 .tabItem {
                     Label("Sell", systemImage: "tag.fill")
+                }
+                .tag(1)
+            
+            CartView()
+                .environmentObject(CartManager.shared)
+                .tabItem {
+                    // Custom tab item with badge
+                    VStack {
+                        if cartManager.cartItems.count > 0 {
+                            Text("\(cartManager.cartItems.count)")
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .padding(5)
+                                .background(Color.red)
+                                .clipShape(Circle())
+                                .offset(x: 10, y: -10)
+                        }
+                        Image(systemName: "cart.fill")
+                        Text("Cart")
+                    }
                 }
                 .tag(2)
 
@@ -65,5 +81,6 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
             .environmentObject(UserSession())
+            .environmentObject(CartManager.shared)
     }
 }

@@ -12,12 +12,14 @@ import FirebaseAuth
 import FirebaseFirestoreSwift
 
 struct AddItemView: View {
-    @Binding var itemsForSale: [ItemForSale]
+    @Binding var itemsForSaleAndRent: [ItemForSaleAndRent]
     @Environment(\.presentationMode) var presentationMode
 
     @State private var itemName: String = ""
     @State private var itemDescription: String = ""
     @State private var itemPrice: String = ""
+    @State private var rentPrice: String = ""
+    @State private var rentPeriod: String = "1 day"
     @State private var selectedSize: String = ""
     @State private var isPresentingMediaPicker = false
     @State private var inputImage: UIImage?
@@ -27,7 +29,6 @@ struct AddItemView: View {
     @State private var showingSourcePicker = false
     @State private var videoURL: URL?
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
-    @State private var sellOrRentOption: String = ""
     @State private var selectedColorIndex = 0
 
 
@@ -35,34 +36,60 @@ struct AddItemView: View {
 
 
     let sizes = ["XS", "S", "M", "L", "XL", "XXL"]
-    let categories = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes", "Electronics", "Dorm Essentials", "Books"]
-    let sellOrRentOptions = ["Sell", "Rent"]
+    let categories = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes","Electronics", "Dorm Essentials", "Books" ]
     let currencyFormatter = NumberFormatter.currencyFormatter()
+    let rentPeriodOptions = ["1 day", "1 week", "2 weeks", "1 month"]
 
     var body: some View {
-        NavigationView {
-            Form {
-                itemImageSection
-                itemNameSection
-                itemDescriptionSection
-                itemPriceSection
-                itemSizeSection
-                itemColorSection
-                categorySection
-                if ["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) {
-                                sellOrRentSection
-                            }
-            }
-            .navigationTitle("Add New Item")
-            .navigationBarItems(trailing: Button("Done") {
-                addNewItem()
-            }.disabled(itemName.isEmpty || itemPrice.isEmpty || selectedSize.isEmpty || selectedCategory.isEmpty || (["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) && sellOrRentOption.isEmpty) || (inputImage == nil && videoURL == nil)))
-            .sheet(isPresented: $isPresentingMediaPicker) {
-                UniversalMediaPickerView(inputImage: $inputImage, videoURL: $videoURL, completion: handleMediaSelection, sourceType: sourceType)
+            NavigationView {
+                Form {
+                    itemImageSection
+                    itemNameSection
+                    itemDescriptionSection
+                    categorySection
+                    itemPriceSection
+                    rentOptionsSection
+                    itemSizeSection
+                    itemColorSection
+                }
+                .navigationTitle("Add New Item")
+                .navigationBarItems(trailing: Button("Done") {
+                    addNewItem()
+                }.disabled(isFormInvalid))
+                .sheet(isPresented: $isPresentingMediaPicker) {
+                    UniversalMediaPickerView(inputImage: $inputImage, videoURL: $videoURL, completion: handleMediaSelection, sourceType: sourceType)
+                }
             }
         }
-    }
     
+    var isFormInvalid: Bool {
+            let hasMedia = inputImage != nil || videoURL != nil
+            let hasRequiredTextFieldsFilled = !itemName.isEmpty && !selectedCategory.isEmpty && !selectedSize.isEmpty
+            let hasSaleOrRentalInfo = !itemPrice.isEmpty || (!rentPrice.isEmpty && !rentPeriod.isEmpty)
+            
+            return !(hasMedia && hasRequiredTextFieldsFilled && hasSaleOrRentalInfo)
+        }
+
+        private var rentOptionsSection: some View {
+            let isRentalDisabled = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes"].contains(selectedCategory)
+            
+            return Section(header: Text("Rental Options")) {
+                HStack {
+                    Text(currencyFormatter.currencySymbol)
+                        .foregroundColor(.gray)
+                    TextField("Enter Rental Price", text: $rentPrice)
+                        .keyboardType(.decimalPad)
+                        .disabled(isRentalDisabled)
+                }
+                Picker("Select Rental Period", selection: $rentPeriod) {
+                    ForEach(rentPeriodOptions, id: \.self) {
+                        Text($0)
+                    }
+                }
+                .disabled(isRentalDisabled)
+            }
+        }
+
     private func handleMediaSelection() {
         if let selectedImage = inputImage {
             // An image was selected
@@ -96,14 +123,16 @@ struct AddItemView: View {
 
 
     private func addNewItem() {
-        guard !itemName.isEmpty, let price = Double(itemPrice), !selectedCategory.isEmpty, !(["Books", "Dorm Essentials", "Electronics"].contains(selectedCategory) && sellOrRentOption.isEmpty) else { return }
+        guard !itemName.isEmpty, !selectedCategory.isEmpty, (inputImage != nil || videoURL != nil) else {
+            print("Validation failed")
+            return
+        }
 
         let completion: (Result<URL, Error>) -> Void = { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let url):
                     self.createItemWithMedia(url: url.absoluteString, isVideo: self.videoURL != nil)
-                    self.presentationMode.wrappedValue.dismiss()
                 case .failure(let error):
                     print("Upload error: \(error.localizedDescription)")
                 }
@@ -113,23 +142,7 @@ struct AddItemView: View {
         if let inputImage = self.inputImage {
             FirebaseStorageManager.shared.uploadImageToStorage(inputImage, completion: completion)
         } else if let videoURL = self.videoURL {
-            // Adjust as necessary for copying and uploading from the new location
-            let fileManager = FileManager.default
-            let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let destinationPath = documentsDirectory.appendingPathComponent(videoURL.lastPathComponent)
-            
-            do {
-                if fileManager.fileExists(atPath: destinationPath.path) {
-                    try fileManager.removeItem(at: destinationPath)
-                }
-                try fileManager.copyItem(at: videoURL, to: destinationPath)
-                
-                // Now upload from the new location
-                FirebaseStorageManager.shared.uploadVideoToStorage(destinationPath, completion: completion)
-            } catch {
-                print("File copy error: \(error.localizedDescription)")
-                // Handle the error, possibly calling completion(.failure(error))
-            }
+            FirebaseStorageManager.shared.uploadVideoToStorage(videoURL, completion: completion)
         }
     }
 
@@ -138,40 +151,40 @@ struct AddItemView: View {
             print("User not logged in")
             return
         }
-        
-        let selectedColorName = colorChoices[selectedColorIndex].name
-            let newItem = ItemForSale(
-            name: itemName,
-            description: itemDescription,
-            price: Double(itemPrice) ?? 0.0,
-            size: selectedSize,
-            color: selectedColorName,
-            mediaUrl: url,
-            isVideo: isVideo,
-            sellOrRent: sellOrRentOption,
-            userId: userId // Add this line
-        )
-        
+
+        let salePrice = !itemPrice.isEmpty ? Double(itemPrice) ?? 0.0 : 0.0
+        let isRentalDisabled = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes"].contains(selectedCategory)
+        let rentalPrice = !isRentalDisabled && !rentPrice.isEmpty ? Double(rentPrice) ?? 0.0 : 0.0
+        let rentalPeriod = !isRentalDisabled && !rentPeriod.isEmpty ? rentPeriod : "Not Applicable"
+
+        var data: [String: Any] = [
+            "userId": userId,
+            "name": itemName,
+            "description": itemDescription,
+            "mediaUrl": url,
+            "isVideo": isVideo,
+            "timestamp": FieldValue.serverTimestamp(),
+            "price": salePrice,
+            "rentPrice": rentalPrice,
+            "rentPeriod": rentalPeriod,
+            "size": selectedSize,
+            "color": colorChoices[selectedColorIndex].name // Assuming colorChoices is an array of some color structure
+        ]
+
         let db = Firestore.firestore()
-        db.collection("itemsForSale").addDocument(data: [
-            "name": newItem.name,
-            "description": newItem.description,
-            "price": newItem.price,
-            "size": newItem.size,
-            "color": newItem.color.description, // You might need a better way to encode color
-            "mediaUrl": newItem.mediaUrl,
-            "isVideo": newItem.isVideo,
-            "sellOrRent": newItem.sellOrRent,
-            "userId": newItem.userId, // Ensure this is included
-            "timestamp": FieldValue.serverTimestamp()
-        ]) { error in
+        db.collection("itemsForSaleAndRent").addDocument(data: data) { error in
             if let error = error {
-                print("Error adding document: \(error)")
+                print("Error adding document: \(error.localizedDescription)")
             } else {
-                self.presentationMode.wrappedValue.dismiss()
+                print("Item successfully added to Firestore.")
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("DidAddNewItem"), object: nil)
+                    self.presentationMode.wrappedValue.dismiss()
+                }
             }
         }
     }
+
     
     private var itemImageSection: some View {
         Section(header: Text("Item Image")) {
@@ -221,18 +234,29 @@ struct AddItemView: View {
             }
         }
 
-        private var itemDescriptionSection: some View {
-            Section(header: Text("Description")) {
-                TextField("Enter description", text: $itemDescription)
-            }
+    private var itemDescriptionSection: some View {
+        Section(header: Text("Description")) {
+            TextField("Enter description", text: $itemDescription)
         }
+    }
 
+    private var categorySection: some View {
+        Section(header: Text("Category")) {
+            Picker("Select Category", selection: $selectedCategory) {
+                ForEach(categories, id: \.self) {
+                    Text($0)
+                }
+            }
+            .pickerStyle(MenuPickerStyle()) // Use MenuPickerStyle for compact presentation
+        }
+    }
+    
     private var itemPriceSection: some View {
-        Section(header: Text("Price")) {
+        Section(header: Text("Sale Option")) {
             HStack {
                 Text(currencyFormatter.currencySymbol)
                     .foregroundColor(.gray)
-                TextField("Enter price", text: $itemPrice)
+                TextField("Enter Sale price", text: $itemPrice)
                     .keyboardType(.decimalPad)
                     .onReceive(itemPrice.publisher.collect()) {
                         self.itemPrice = String($0.prefix(10)).filter { "0123456789.".contains($0) }
@@ -267,29 +291,6 @@ struct AddItemView: View {
                 .pickerStyle(WheelPickerStyle())
             }
         }
-
-
-    private var categorySection: some View {
-        Section(header: Text("Category")) {
-            Picker("Select Category", selection: $selectedCategory) {
-                ForEach(categories, id: \.self) {
-                    Text($0)
-                }
-            }
-            .pickerStyle(MenuPickerStyle()) // Use MenuPickerStyle for compact presentation
-        }
-    }
-    
-    private var sellOrRentSection: some View {
-        Section(header: Text("Sell or Rent")) {
-            Picker("Sell or Rent", selection: $sellOrRentOption) {
-                ForEach(sellOrRentOptions, id: \.self) { option in
-                    Text(option).tag(option)
-                }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-        }
-    }
 
 
     private var addItemButtonSection: some View {
@@ -342,20 +343,6 @@ extension NumberFormatter {
     }
 }
 
-struct ItemForSale: Identifiable, Codable {
-    @DocumentID var id: String?
-    var name: String
-    var description: String
-    var price: Double
-    var size: String
-    var color: String
-    var mediaUrl: String
-    var isVideo: Bool
-    var sellOrRent: String
-    var userId: String
-    @ServerTimestamp var timestamp: Date?
-}
-
 
 struct CurrencyInputField: View {
     @Binding var value: Double?
@@ -370,9 +357,9 @@ struct CurrencyInputField: View {
     }
 }
 
-// Preview for AddItemView
 struct AddItemView_Previews: PreviewProvider {
     static var previews: some View {
-        AddItemView(itemsForSale: .constant([]))
+        
+        AddItemView(itemsForSaleAndRent: .constant([])) 
     }
 }
