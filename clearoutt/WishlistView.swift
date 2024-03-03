@@ -5,14 +5,56 @@
 //  Created by Bolanle Adisa on 1/22/24.
 //
 
+// WishlistView.swift
+
 import SwiftUI
 
 struct WishlistView: View {
+    @EnvironmentObject var wishlistManager: WishlistManager
+    @State private var selectedItem: ItemForSaleAndRent?
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            VStack {
+                Text("My Wishlist")
+                    .font(.headline)
+                    .padding()
+
+                List(wishlistManager.wishlistItems) { item in
+                    VStack(alignment: .leading) {
+                        Text(item.name).font(.headline)
+                       
+                        Text("Price: $\(item.price ?? 0.0, specifier: "%.2f")")
+                       
+                    }
+                    .padding()
+                    .onTapGesture {
+                        self.selectedItem = item
+                    }
+                }
+                Spacer()
+            }
+            .sheet(item: $selectedItem) { item in
+                ItemDetailView(item: item)
+            }
+        }
     }
 }
 
-#Preview {
-    WishlistView()
+
+struct ItemDetailView: View {
+    var item: ItemForSaleAndRent
+
+    var body: some View {
+        VStack {
+            Text(item.name) // Display the item's name
+            // Add more item details here as needed
+        }
+    }
+}
+
+struct WishlistView_Previews: PreviewProvider {
+    static var previews: some View {
+        WishlistView().environmentObject(WishlistManager.shared)
+    }
 }

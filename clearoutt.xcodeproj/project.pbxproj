@@ -46,6 +46,8 @@
 		610E3B062B622E500081A3F0 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610E3B052B622E500081A3F0 /* SignInView.swift */; };
 		610E3B072B622E500081A3F0 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610E3B052B622E500081A3F0 /* SignInView.swift */; };
 		610E3B082B622E500081A3F0 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610E3B052B622E500081A3F0 /* SignInView.swift */; };
+		610FCCE52B937FAC00E599BE /* WishlistManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610FCCE42B937FAC00E599BE /* WishlistManager.swift */; };
+		610FCCE72B93845D00E599BE /* ItemCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610FCCE62B93845D00E599BE /* ItemCard.swift */; };
 		611179C22B5EDACA00989C42 /* clearouttApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179C12B5EDACA00989C42 /* clearouttApp.swift */; };
 		611179C42B5EDACA00989C42 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179C32B5EDACA00989C42 /* ContentView.swift */; };
 		611179C62B5EDACB00989C42 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 611179C52B5EDACB00989C42 /* Assets.xcassets */; };
@@ -53,7 +55,6 @@
 		611179D32B5EDACB00989C42 /* clearouttTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179D22B5EDACB00989C42 /* clearouttTests.swift */; };
 		611179DD2B5EDACB00989C42 /* clearouttUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179DC2B5EDACB00989C42 /* clearouttUITests.swift */; };
 		611179DF2B5EDACB00989C42 /* clearouttUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179DE2B5EDACB00989C42 /* clearouttUITestsLaunchTests.swift */; };
-		611179F02B5EDD5A00989C42 /* BagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179EF2B5EDD5A00989C42 /* BagView.swift */; };
 		611179F42B5EDD9300989C42 /* WishlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179F32B5EDD9300989C42 /* WishlistView.swift */; };
 		611179F62B5EDDBC00989C42 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179F52B5EDDBC00989C42 /* UserProfileView.swift */; };
 		611179F82B5EDE3A00989C42 /* UserSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 611179F72B5EDE3A00989C42 /* UserSession.swift */; };
@@ -103,6 +104,8 @@
 		610E3AC62B6228190081A3F0 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		610E3B012B622E3F0081A3F0 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
 		610E3B052B622E500081A3F0 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		610FCCE42B937FAC00E599BE /* WishlistManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistManager.swift; sourceTree = "<group>"; };
+		610FCCE62B93845D00E599BE /* ItemCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemCard.swift; sourceTree = "<group>"; };
 		611179BE2B5EDACA00989C42 /* clearoutt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = clearoutt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		611179C12B5EDACA00989C42 /* clearouttApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = clearouttApp.swift; sourceTree = "<group>"; };
 		611179C32B5EDACA00989C42 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -113,7 +116,6 @@
 		611179D82B5EDACB00989C42 /* clearouttUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = clearouttUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		611179DC2B5EDACB00989C42 /* clearouttUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = clearouttUITests.swift; sourceTree = "<group>"; };
 		611179DE2B5EDACB00989C42 /* clearouttUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = clearouttUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		611179EF2B5EDD5A00989C42 /* BagView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BagView.swift; sourceTree = "<group>"; };
 		611179F32B5EDD9300989C42 /* WishlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishlistView.swift; sourceTree = "<group>"; };
 		611179F52B5EDDBC00989C42 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
 		611179F72B5EDE3A00989C42 /* UserSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSession.swift; sourceTree = "<group>"; };
@@ -222,7 +224,6 @@
 				610E3AC22B6164970081A3F0 /* DonateView.swift */,
 				611179F52B5EDDBC00989C42 /* UserProfileView.swift */,
 				611179F32B5EDD9300989C42 /* WishlistView.swift */,
-				611179EF2B5EDD5A00989C42 /* BagView.swift */,
 				611179F72B5EDE3A00989C42 /* UserSession.swift */,
 				610E3B012B622E3F0081A3F0 /* SignUpView.swift */,
 				610E3B052B622E500081A3F0 /* SignInView.swift */,
@@ -245,6 +246,8 @@
 				613908BF2B8CC5860085EE34 /* ItemsForSaleManager.swift */,
 				6174ED752B8D0BA8005AC0B0 /* ItemCustomerView.swift */,
 				6174ED772B8D163D005AC0B0 /* CartManager.swift */,
+				610FCCE42B937FAC00E599BE /* WishlistManager.swift */,
+				610FCCE62B93845D00E599BE /* ItemCard.swift */,
 				610E3AC62B6228190081A3F0 /* GoogleService-Info.plist */,
 				611179C52B5EDACB00989C42 /* Assets.xcassets */,
 				611179C72B5EDACB00989C42 /* Preview Content */,
@@ -444,6 +447,7 @@
 			files = (
 				61F562522B876A540004E8B5 /* ItemRow.swift in Sources */,
 				61F5624C2B870C970004E8B5 /* ItemDetailsView.swift in Sources */,
+				610FCCE52B937FAC00E599BE /* WishlistManager.swift in Sources */,
 				610E3AC32B6164970081A3F0 /* DonateView.swift in Sources */,
 				61F5624E2B870E3C0004E8B5 /* ItemDetails.swift in Sources */,
 				61493B732B70D8440059F778 /* AddItemView.swift in Sources */,
@@ -451,6 +455,7 @@
 				613182B42B83382300DB13CE /* ImageViewer.swift in Sources */,
 				613182AE2B82FDD500DB13CE /* UniversalMediaPickerView.swift in Sources */,
 				610E3AC12B6164660081A3F0 /* SellView.swift in Sources */,
+				610FCCE72B93845D00E599BE /* ItemCard.swift in Sources */,
 				611179F62B5EDDBC00989C42 /* UserProfileView.swift in Sources */,
 				610E3B022B622E3F0081A3F0 /* SignUpView.swift in Sources */,
 				613908C02B8CC5860085EE34 /* ItemsForSaleManager.swift in Sources */,
@@ -467,7 +472,6 @@
 				6174ED762B8D0BA8005AC0B0 /* ItemCustomerView.swift in Sources */,
 				61F562502B8734120004E8B5 /* ColorChoices.swift in Sources */,
 				61F562562B893D370004E8B5 /* CartView.swift in Sources */,
-				611179F02B5EDD5A00989C42 /* BagView.swift in Sources */,
 				6142A81E2B62BFB900649BBE /* College.swift in Sources */,
 				611179F82B5EDE3A00989C42 /* UserSession.swift in Sources */,
 				610E3B062B622E500081A3F0 /* SignInView.swift in Sources */,

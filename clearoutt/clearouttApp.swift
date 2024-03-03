@@ -24,6 +24,7 @@ struct clearouttApp: App {
             ContentView()
                 .environmentObject(userSession)
                 .environmentObject(cartManager)
+                .environmentObject(WishlistManager.shared)
         }
     }
 }
