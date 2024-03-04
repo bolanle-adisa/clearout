@@ -51,6 +51,13 @@ struct ItemCustomerView: View {
         }
         .navigationTitle("Item Details")
         .navigationBarTitleDisplayMode(.inline)
+        .alert(isPresented: $showingAddToCartConfirmation) {
+                Alert(
+                    title: Text("Success"),
+                    message: Text("\(item.name) has been added to your cart"),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
     }
     
     @ViewBuilder

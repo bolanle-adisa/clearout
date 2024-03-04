@@ -15,21 +15,26 @@ struct BuyView: View {
     @State private var isCameraPresented = false
     @State private var selectedOption: String? = nil
     @State private var itemsForSaleAndRent: [ItemForSaleAndRent] = []
+    @State private var filteredItems: [ItemForSaleAndRent] = []
     @StateObject private var itemsManager = ItemsForSaleManager()
     @EnvironmentObject var cartManager: CartManager
+    @State private var showingWishlistView = false
 
-    let options = ["Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes", "Electronics", "Dorm Essentials", "Books"]
+    let options = ["Dorm Essentials", "Books", "Women's Clothes", "Men's Clothes", "Women's Shoes", "Men's Shoes", "Electronics"]
 
     var body: some View {
         NavigationView {
             VStack(alignment: .leading) {
-                titleAndWishListAndCartIcon
+                titleAndWishListIcon
                 searchBar
                 optionsGroup
                 itemsGrid
                 Spacer()
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $showingWishlistView) {
+                WishlistView().environmentObject(WishlistManager.shared)
+            }
         }
         .sheet(isPresented: $isCameraPresented) {
             Text("Camera Functionality Here")
@@ -40,10 +45,16 @@ struct BuyView: View {
             }
             self.fetchItemsForSale()
         }
+        .onChange(of: searchText) { newValue in
+            filterItems()
+        }
+        .onChange(of: selectedOption) { _ in
+            filterItems()
+        }
 
     }
 
-    var titleAndWishListAndCartIcon: some View {
+    var titleAndWishListIcon: some View {
         HStack {
             Text("CLEAROUT")
                 .font(.largeTitle)
@@ -52,16 +63,18 @@ struct BuyView: View {
             Spacer()
             
             Button(action: {
-                // Action for wishlist icon
+                print("Wishlist button tapped") // Debug message
+                showingWishlistView = true
             }) {
                 Image(systemName: "heart.fill")
                     .foregroundColor(.black)
                     .imageScale(.large)
             }
             .padding(.trailing, 15)
-        }
-        .padding(.leading)
-    }
+
+                    }
+                    .padding(.leading)
+                }
 
     var searchBar: some View {
         HStack {
@@ -132,9 +145,11 @@ struct BuyView: View {
             GridItem(.flexible(), spacing: 16)
         ]
         
+        let displayItems = searchText.isEmpty ? itemsForSaleAndRent : filteredItems
+        
         return ScrollView(.vertical, showsIndicators: false) {
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(itemsForSaleAndRent) { item in
+                ForEach(displayItems) { item in
                     NavigationLink(destination: ItemCustomerView(item: item)) {
                         ItemCard(item: item)
                     }
@@ -171,89 +186,18 @@ struct BuyView: View {
         }
     }
     
-}
-
-struct ItemCard: View {
-    let item: ItemForSaleAndRent
-
-    var body: some View {
-        VStack {
-            if item.isVideo {
-                VideoPreview(url: URL(string: item.mediaUrl))
-                    .frame(width: 150, height: 150)
-                    .cornerRadius(10)
-                    .clipped()
+    private func filterItems() {
+            if searchText.isEmpty {
+                filteredItems = itemsForSaleAndRent
             } else {
-                AsyncImage(url: URL(string: item.mediaUrl)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 150, height: 200)
-                            .cornerRadius(10)
-                            .clipped()
-                    case .failure(_), .empty:
-                        Color.gray.opacity(0.1)
-                            .frame(width: 150, height: 200)
-                            .cornerRadius(10)
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.name)
-                    .font(.headline)
-                    .foregroundColor(.black)
-                
-                if let salePrice = item.price, salePrice > 0 {
-                                    Text("Sale: $\(salePrice, specifier: "%.2f")")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                } else {
-                                    Text("Sale: Not Applicable")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                // Display rent price and period if available
-                                if let rentPrice = item.rentPrice, rentPrice > 0, let rentPeriod = item.rentPeriod, rentPeriod != "Not Applicable" {
-                                    Text("Rent: $\(rentPrice, specifier: "%.2f") / \(rentPeriod)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                } else if let rentPrice = item.rentPrice, rentPrice == 0 {
-                                    Text("Rent: Not Applicable")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer()
-
-            HStack {
-                Button(action: {
-                    // Wishlist action
-                }) {
-                    Image(systemName: "heart")
-                        .foregroundColor(.black)
-                }
-                .padding(.trailing, 100)
-
-                Button(action: {
-                    // Add to cart action
-                }) {
-                    Image(systemName: "cart")
-                        .foregroundColor(.black)
+                let lowercasedQuery = searchText.lowercased()
+                filteredItems = itemsForSaleAndRent.filter { item in
+                    item.name.lowercased().contains(lowercasedQuery) ||
+                    (item.description?.lowercased().contains(lowercasedQuery) ?? false)
                 }
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(radius: 2)
-    }
+    
 }
 
 struct VideoPreview: View {
@@ -268,5 +212,6 @@ struct VideoPreview: View {
 struct BuyView_Previews: PreviewProvider {
     static var previews: some View {
         BuyView()
+            .environmentObject(WishlistManager.shared)
     }
 }
